@@ -5,17 +5,13 @@
 int 
 main(int argc, char **argv)
 {
-	int N;
-	Sparse *res = parse_data(argv[1], &N);
-	Sparse *array = res; 
-	printf("%d\n", N);
-	
-	int b = 0;
+	int N = 0;
+	char *dataset_path = argv[1];
+	Sparse *array = parse_data(dataset_path);	
 	while (array != NULL){
-		printf("%d %d \n", array->row, array->col);
 		array = array->next;
-		b++;
+		N++;
 	}
-	printf("%d\n", b);
+	printf("%d\n", N);
 	return 0;
 }
