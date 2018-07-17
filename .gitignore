@@ -1,3 +1,5 @@
 *.pdf
 datasets
 matlab_pagerank
+bin
+obj
