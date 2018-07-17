@@ -3,10 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_LENGTH 100
+#define MAX_LENGTH 200
 
 Sparse* 
-parse_data(char *filename, int *N)
+parse_data(char *filename)
 {
 	/*Initialize the datastructure.*/
 	Sparse *data, *next;
@@ -30,14 +30,14 @@ parse_data(char *filename, int *N)
 
 	char current_char;   // the current character that is reading
 	int buffer_index = 0; // Input buffers index
-	*N = 0;		     // The total number of elements.
 	char *number;
+	int first = 1;
 	while ((current_char = fgetc(fd)) != EOF){
 		if (current_char != '\n')
 			buffer[buffer_index++] = current_char;
 		else{
 			/*Append to the list.*/
-			if (*N != 0){
+			if (!first){
 				current_node->next = next;
 				current_node = current_node->next;
 			}
@@ -48,13 +48,12 @@ parse_data(char *filename, int *N)
 			number = strtok(NULL, "\t");
 			current_node->col = atoi(number);
 			
-			number = strtok(NULL, "\t");
-			current_node->value = atoi(number);
+			current_node->value = 1;
 			
 			/*Zero buffer.*/
-			(*N)++;
 			memset(buffer, 0, MAX_LENGTH);
 			buffer_index = 0;
+			first = 0;
 
 			/*Initialize the next element.*/
 			if ((next = malloc(sizeof *next)) == NULL){

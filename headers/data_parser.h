@@ -3,6 +3,6 @@
 
 #include "sparse.h"
 
-Sparse* parse_data(char *filename, int *N);
+Sparse* parse_data(char *filename);
 
 #endif
