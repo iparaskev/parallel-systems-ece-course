@@ -18,10 +18,10 @@ DEPS = $(patsubst %, $(HEADERS)/%,$(_DEPS))
 OBJ = $(patsubst %, $(OBJD)/%,$(_OBJ))
 
 # COMMANDS
+all: $(RUN)
+
 $(OBJD)/%.o: $(SRC)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)$(HEADERS) 
-
-all: $(RUN)
 
 page_rank_serial: $(OBJ) 
 	$(CC) -o $(BIN)/$@ $^
@@ -29,6 +29,6 @@ page_rank_serial: $(OBJ)
 clean:
 	$(RM) $(OBJD)/*
 
-clean all:
+clean_all:
 	$(RM) $(OBJD)/* $(BIN)/*
 
