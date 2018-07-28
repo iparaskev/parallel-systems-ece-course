@@ -3,18 +3,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_LENGTH 200
+#define MAX_LENGTH 50
 
-Sparse* 
+Sparse_list* 
 parse_data(char *filename)
 {
 	/*Initialize the datastructure.*/
-	Sparse *data, *next;
+	Sparse_list *data, *next, *current_node;
 	if ((data = malloc(sizeof *data)) == NULL){
 		perror("Malloc");
 		exit(1);
 	}
-	Sparse *current_node;
 	current_node = data;
 
 	/*Read file.*/
@@ -43,12 +42,12 @@ parse_data(char *filename)
 			}
 			/* Get the values of the sparse array from the buffer*/	
 			number = strtok(buffer, "\t");
-			current_node->row = atoi(number);
+			current_node->cell.row = atoi(number);
 
 			number = strtok(NULL, "\t");
-			current_node->col = atoi(number);
+			current_node->cell.col = atoi(number);
 			
-			current_node->value = 1;
+			current_node->cell.value = 1;
 			
 			/*Zero buffer.*/
 			memset(buffer, 0, MAX_LENGTH);
