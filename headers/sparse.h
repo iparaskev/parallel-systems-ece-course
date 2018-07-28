@@ -5,7 +5,7 @@
 typedef struct Sparse_cell
 {
         int row, col;
-        int value;
+        float value;
 }Sparse;
 
 /* A linked list of sparse cellsi.*/
