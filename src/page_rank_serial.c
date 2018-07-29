@@ -24,9 +24,9 @@ main(int argc, char **argv)
 	N = count_elements(&rows, array);
 	printf("%d %d\n", N, rows);
 	Sparse_half **adjacency = create_adjacency(N, rows, array, &row_sums);
-	for (int i = 0; i < rows; i++)
-		for (int j = 0; j < row_sums[i]; j++)
-			printf("%d %d %f\n", i, adjacency[i][j].col, adjacency[i][j].value);
+	//for (int i = 0; i < rows; i++)
+	//	for (int j = 0; j < row_sums[i]; j++)
+	//		printf("%d %d %f\n", i, adjacency[i][j].col, adjacency[i][j].value);
 
 	return 0;
 }
@@ -109,31 +109,25 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 
 	/* Access all the elements of the list to count the elements per row.*/
 	Sparse_list *current = dataset;
-	do
+	while (current != NULL)
 	{
 		row_sums[current->cell.row - 1]++;
 		current = current->next;
 	}
-	while (current->next != NULL);
-	row_sums[current->cell.row - 1]++;  // Add the last element
 
-	/* Append to the list the rows with only zeros*/
-	int count = 0;
-	Sparse cell;
+	/* A row with normal distributed elements */
+	Sparse_half *normal;
+	if ((normal = malloc(rows * sizeof *normal)) == NULL)
+	{
+		perror("Malloc at normal row");
+		exit(1);
+	}
 	for (int i = 0; i < rows; i++)
-		if (row_sums[i] == 0)
-		{
-			count++;
-			for (int j = 0; j < rows; j++)
-			{
-				cell.row = i + 1;
-				cell.col = j + 1;
-				cell.value = 1;
-				append(cell, &current);
-			}
-			row_sums[i] = rows;
-		}
-	
+	{
+		normal[i].col = i;
+		normal[i].value = 1. / rows;
+	}
+
 	/* Create the known sparse array.*/
 	Sparse_half **adjacency;
 	if ((adjacency = malloc(rows * sizeof *adjacency)) == NULL)
@@ -141,15 +135,22 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		perror("Malloc at creation of adjacency");
 		exit(1);
 	}
-
 	/* Initialize the rows*/
 	for (int i = 0; i < rows; i++)
 	{
-		adjacency[i] = malloc(row_sums[i] * sizeof **adjacency);
-		if (adjacency[i] == NULL)
+		if (row_sums[i])
 		{
-			perror("Malloc at creation of adjacency");
-			exit(1);
+			adjacency[i] = malloc(row_sums[i] * sizeof **adjacency);
+			if (adjacency[i] == NULL)
+			{
+				perror("Malloc at creation of adjacency");
+				exit(1);
+			}
+		}
+		else
+		{
+			adjacency[i] = normal;
+			row_sums[i] = rows;
 		}
 	}
 
