@@ -12,6 +12,7 @@ typedef struct mid_cell
 Sparse_half** create_adjacency(int N, int rows, 
 		               Sparse_list *dataset, int **row_sums);
 int count_elements(int *rows, Sparse_list *array);
+void append(Sparse cell, Sparse_list **current);
 
 int 
 main(int argc, char **argv)
@@ -24,9 +25,6 @@ main(int argc, char **argv)
 	N = count_elements(&rows, array);
 	printf("%d %d\n", N, rows);
 	Sparse_half **adjacency = create_adjacency(N, rows, array, &row_sums);
-	//for (int i = 0; i < rows; i++)
-	//	for (int j = 0; j < row_sums[i]; j++)
-	//		printf("%d %d %f\n", i, adjacency[i][j].col, adjacency[i][j].value);
 
 	return 0;
 }
@@ -135,7 +133,7 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		perror("Malloc at creation of adjacency");
 		exit(1);
 	}
-	/* Initialize the rows*/
+	/* Initialize the rows and if one is all zeros assign the normal*/
 	for (int i = 0; i < rows; i++)
 	{
 		if (row_sums[i])
@@ -163,15 +161,18 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 	}
 	memset(indexes, 0, rows);
 
+	/* Run through the list and for every cell assign the value to the 
+	 * right row and column of the contigius adjacency matrix 
+	 */
 	current = dataset;
 	int row, column;
 	while (current != NULL)
 	{
-		row = current->cell.row - 1;
+		row = current->cell.row - 1; 
 		column = indexes[row];
 		indexes[row]++;
 		adjacency[row][column].col = current->cell.col - 1;
-		adjacency[row][column].value = (float) 1 / row_sums[row];
+		adjacency[row][column].value = 1. / row_sums[row];
 		current = current->next;
 	}
 	

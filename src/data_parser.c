@@ -49,17 +49,17 @@ parse_data(char *filename)
 			
 			current_node->cell.value = 1;
 			
-			/*Zero buffer.*/
-			memset(buffer, 0, MAX_LENGTH);
-			buffer_index = 0;
-			first = 0;
-
+			current_node->next = NULL;
 			/*Initialize the next element.*/
 			if ((next = malloc(sizeof *next)) == NULL){
 				perror("Malloc");
 				exit(1);
 			}
-			current_node->next = NULL;
+
+			/*Zero buffer.*/
+			memset(buffer, 0, MAX_LENGTH);
+			buffer_index = 0;
+			first = 0;
 		}
 	}		
 
