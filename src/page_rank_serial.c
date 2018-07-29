@@ -4,62 +4,176 @@
 #include <stdio.h>
 #include <string.h>
 
-Sparse* create_adjacency(int N, Sparse_list *dataset);
+typedef struct mid_cell
+{
+	int col;
+	float value;
+} Sparse_half;
+Sparse_half** create_adjacency(int N, int rows, 
+		               Sparse_list *dataset, int **row_sums);
+int count_elements(int *rows, Sparse_list *array);
 
 int 
 main(int argc, char **argv)
 {
-	int N = 0;
+	int N, rows, *row_sums; 
 	char *dataset_path = argv[1];
 
 	/* Read the dataset and count the nodes.*/
 	Sparse_list *array = parse_data(dataset_path);	
-	Sparse_list *dataset = array;
-	while (array != NULL){
-		array = array->next;
-		N++;
-	}
-	printf("%d\n", N);
-	Sparse *adjacency = create_adjacency(N, dataset);
+	N = count_elements(&rows, array);
+	printf("%d %d\n", N, rows);
+	Sparse_half **adjacency = create_adjacency(N, rows, array, &row_sums);
+	for (int i = 0; i < rows; i++)
+		for (int j = 0; j < row_sums[i]; j++)
+			printf("%d %d %f\n", i, adjacency[i][j].col, adjacency[i][j].value);
 
 	return 0;
 }
 
-Sparse*
-create_adjacency(int N, Sparse_list *dataset)
+/* Count the elements of the sparse dataset and find the number of unique nodes.
+ *
+ * Arguments:
+ * rows -- the variable where the last index will be saved
+ * array -- the linked list with the sparse array
+ *
+ * Output:
+ * N -- the number of sparse cells
+ */
+int 
+count_elements(int *rows, Sparse_list *array)
 {
-	/* Find the total elements of every row of sparse matrix*/
-	int *row_sums;
-	if ((row_sums = malloc(N * sizeof *row_sums)) == NULL)
+	int last_index = -1;
+	int N = 0;
+	while (array != NULL){
+		if (array->cell.row > last_index)
+			last_index = array->cell.row;
+		if (array->cell.col > last_index)
+			last_index = array->cell.col;
+		array = array->next;
+		N++;
+	}
+	*rows = last_index;
+	
+	return N;
+}
+
+/* Append an element to the end of the linked list and make the new element the
+ * new current element.
+ *
+ * Arguments:
+ * cell -- the new sparse cell of the list
+ * current -- the last element before the change
+ */
+void 
+append(Sparse cell, Sparse_list **current)
+{
+	Sparse_list *next, *end;
+	end = *current;
+	if ((next = malloc(sizeof *next)) == NULL)
+	{
+		perror("Malloc at appending element");
+		exit(1);
+	}
+
+	next->cell = cell;
+	next->next = NULL;
+	end->next = next;
+	end = end->next;
+	*current  = end;
+}
+
+/* Computes the complete adjacency matrix from the sparse list, also it fills
+ * the rows with all zeros with a normal distribuded row.
+ *
+ * Arguments:
+ * N -- the number of the cells of the initial sparse matrix
+ * rows -- the number of rows of the sparse matrix
+ * dataset -- a pointer to the start of the linked list that contains the 
+ *            initial sparse
+ *
+ * Output:
+ * The final sparse array.
+ */ 
+Sparse_half**
+create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
+{
+	/* Find the total elements of every row of sparse matrix.*/
+	int *row_sums;  // An array for the total elements of every row.
+	if ((row_sums = malloc(rows * sizeof *row_sums)) == NULL)
 	{
 		perror("Malloc at creation of row_sums");
 		exit(1);
 	}
-	memset(row_sums, 0, N);
-	
-	Sparse_list element = *dataset;
-	for (int i = 0; i < N; i++)
-	{
-		row_sums[element.cell.row - 1]++;
-		if (element.next != NULL)
-			element = *(element.next);
-	}
+	memset(row_sums, 0, rows); // Initialization of the sums array.
 
-	Sparse *adjacency;
-	if ((adjacency = malloc(N * sizeof *adjacency)) == NULL)
+	/* Access all the elements of the list to count the elements per row.*/
+	Sparse_list *current = dataset;
+	do
+	{
+		row_sums[current->cell.row - 1]++;
+		current = current->next;
+	}
+	while (current->next != NULL);
+	row_sums[current->cell.row - 1]++;  // Add the last element
+
+	/* Append to the list the rows with only zeros*/
+	int count = 0;
+	Sparse cell;
+	for (int i = 0; i < rows; i++)
+		if (row_sums[i] == 0)
+		{
+			count++;
+			for (int j = 0; j < rows; j++)
+			{
+				cell.row = i + 1;
+				cell.col = j + 1;
+				cell.value = 1;
+				append(cell, &current);
+			}
+			row_sums[i] = rows;
+		}
+	
+	/* Create the known sparse array.*/
+	Sparse_half **adjacency;
+	if ((adjacency = malloc(rows * sizeof *adjacency)) == NULL)
 	{
 		perror("Malloc at creation of adjacency");
 		exit(1);
 	}
-	element = *dataset;
-	for (int i = 0; i < N; i++)
+
+	/* Initialize the rows*/
+	for (int i = 0; i < rows; i++)
 	{
-		adjacency[i] = element.cell;
-		adjacency[i].value /= row_sums[element.cell.row - 1];
-		if (element.next != NULL)
-			element = *(element.next);
-		printf("%d %d %f \n", adjacency[i].row, adjacency[i].col, adjacency[i].value);
+		adjacency[i] = malloc(row_sums[i] * sizeof **adjacency);
+		if (adjacency[i] == NULL)
+		{
+			perror("Malloc at creation of adjacency");
+			exit(1);
+		}
+	}
+
+	/* An array for tracking at which element for every row we are*/
+	int *indexes;
+	if ((indexes = malloc(rows * sizeof *indexes)) == NULL)
+	{
+		perror("Malloc");
+		exit(1);
+	}
+	memset(indexes, 0, rows);
+
+	current = dataset;
+	int row, column;
+	while (current != NULL)
+	{
+		row = current->cell.row - 1;
+		column = indexes[row];
+		indexes[row]++;
+		adjacency[row][column].col = current->cell.col - 1;
+		adjacency[row][column].value = (float) 1 / row_sums[row];
+		current = current->next;
 	}
 	
+	*row_elements = row_sums;
 	return adjacency;
 }
