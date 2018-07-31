@@ -15,4 +15,11 @@ typedef struct Sparse_mod
         struct Sparse_mod *next;
 }Sparse_list;
 
+/* Struct for saving the sparse to an array with known rows*/
+typedef struct mid_cell
+{
+	int col;
+	float value;
+} Sparse_half;
+
 #endif

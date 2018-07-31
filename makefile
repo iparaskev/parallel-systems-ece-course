@@ -4,9 +4,9 @@ SHELL := /bin/bash
 CC = gcc
 RM = rm -f
 RUN = page_rank_serial
-_OBJ = page_rank_serial.o data_parser.o
-CFLAGS = -I 
-_DEPS = sparse.h data_parser.h  
+_OBJ = page_rank_serial.o data_parser.o helper.o 
+CFLAGS = -O3 -I 
+_DEPS = sparse.h data_parser.h constants.h 
 
 # DIRECTORIES
 SRC = src
