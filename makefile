@@ -3,10 +3,10 @@ SHELL := /bin/bash
 # VARIABLES
 CC = gcc
 RM = rm -f
-RUN = page_rank_serial
-_OBJ = page_rank_serial.o data_parser.o helper.o 
+RUN = pagerank
+_OBJ = pagerank.o page_rank_serial.o data_parser.o helper.o pagerank_parallel.o
 CFLAGS = -O3 -I 
-_DEPS = sparse.h data_parser.h constants.h 
+_DEPS = sparse.h data_parser.h constants.h page_rank_serial.h pagerank_parallel.h
 
 # DIRECTORIES
 SRC = src
@@ -21,10 +21,10 @@ OBJ = $(patsubst %, $(OBJD)/%,$(_OBJ))
 all: $(RUN)
 
 $(OBJD)/%.o: $(SRC)/%.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)$(HEADERS) 
+	$(CC) -c -pthread -o $@ $< $(CFLAGS)$(HEADERS) 
 
-page_rank_serial: $(OBJ) 
-	$(CC) -o $(BIN)/$@ $^
+pagerank: $(OBJ) 
+	$(CC) -pthread -o $(BIN)/$@ $^
 
 clean:
 	$(RM) $(OBJD)/*
