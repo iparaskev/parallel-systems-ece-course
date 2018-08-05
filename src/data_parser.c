@@ -42,9 +42,19 @@ parse_data(char *filename)
 			}
 			/* Get the values of the sparse array from the buffer*/	
 			number = strtok(buffer, "\t");
+			if (number == NULL)
+			{
+				fprintf(stderr, "Error at finding next node.");
+				exit(1);
+			}
 			current_node->cell.row = atoi(number);
 
 			number = strtok(NULL, "\t");
+			if (number == NULL)
+			{
+				fprintf(stderr, "Error at finding next node.");
+				exit(1);
+			}
 			current_node->cell.col = atoi(number);
 			
 			current_node->cell.value = 1;
