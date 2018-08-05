@@ -1,30 +1,10 @@
 #include "data_parser.h"
 #include "constants.h"
 #include "helper.h"
+#include "page_rank_serial.h"
 #include <stdlib.h>
-#include <stddef.h>
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-double* pagerank(Sparse_half **adjacency, int rows, int *row_sums);
-
-int 
-main(int argc, char **argv)
-{
-	int N, rows, *row_sums; 
-	double *R;
-	char *dataset_path = argv[1];
-
-	/* Read the dataset and count the nodes.*/
-	Sparse_list *array = parse_data(dataset_path);	
-	N = count_elements(&rows, array);
-	printf("%d %d\n", N, rows);
-	Sparse_half **adjacency = create_adjacency(N, rows, array, &row_sums);
-	R = pagerank(adjacency, rows, row_sums);
-
-	return 0;
-}
+#include <omp.h>
 
 double*
 gs_mult(Sparse_half **A, double **x, double *b, int rows, int *row_sums)
@@ -51,10 +31,7 @@ gs_mult(Sparse_half **A, double **x, double *b, int rows, int *row_sums)
 			a_ii += value * (real_col == row);
 
 			/* Update the vector */
-			if (real_col < row)
-				x_i -= value * x_new[real_col];
-			else if (real_col > row)
-				x_i -= value * x_new[real_col];
+			x_i -= value * x_new[real_col] * (real_col != row);
 		}
 		x_new[row] = x_i / a_ii;
 	}
@@ -72,12 +49,15 @@ pagerank(Sparse_half **adjacency, int rows, int *row_sums)
 	 */
 
 	/* Initialize b vector and initial pagerank*/
-	double b[rows], *x, *x_old;
+	puts("ok pa");
+	double *b, *x, *x_old;
+	b = malloc(rows * sizeof *x);
 	if ((x = malloc(rows * sizeof *x)) == NULL)
 	{
 		perror("Malloc at x");
 		exit(1);
 	}
+	printf("rows %d\n", rows);
 	for (int i = 0; i < rows; i++)
 	{
 		b[i] = (1 - D) / rows;
@@ -86,28 +66,22 @@ pagerank(Sparse_half **adjacency, int rows, int *row_sums)
 
 	int iterations = 0;
 	double delta = 1;
-	while (delta > TOL && iterations < MAX_ITERATIONS)
+	double t, t_s;
+	while (iterations < MAX_ITERATIONS)
 	{
+		t = now();
 		x_old = gs_mult(adjacency, &x, b, rows, row_sums);	
+		t_s = now() - t;
 		delta = norm(x, x_old, rows);
-		printf("iteration: %d delta: %0.15f\n", iterations, delta);
+		printf("iteration: %d delta: %0.15f time: %0.15f\n", iterations, delta, t_s);
 		iterations++;
 		free(x_old);
 	}
-	double sumo = 0;
-	for (int i = 0; i < rows; i++)
-	{
-		sumo += fabs(x[i]);
-		
-	}
-	double pos = 0;
-	for (int i = 0; i < rows; i++)
-	{
-		x[i] /= sumo;
-		pos += x[i];
-	}
-	printf("Final %f\n", pos);
+	normalize(&x, rows);
+	printf("Iterations %d delta %.15f\n", iterations-1, delta);
 
+	/* Clean up */
+	free(b);
 	return x;
 }
 
