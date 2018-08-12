@@ -12,5 +12,6 @@ void validate(double *x, int N, char *filename);
 double now();
 double elapsed_time(double start, double end);
 void normalize(double **x_init, int rows);
+void err_exit(char *arg);
 
 #endif

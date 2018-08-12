@@ -214,3 +214,11 @@ elapsed_time(double start, double end)
 {
 	return end - start;
 }
+
+/* Function to print error and exit the process for visual reasons */
+void 
+err_exit(char *arg)
+{
+	fprintf(stderr, "%s\n", arg);
+	exit(1);
+}
