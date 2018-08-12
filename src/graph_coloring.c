@@ -3,200 +3,213 @@
 #include <stdlib.h>
 #include "data_parser.h"
 #include "helper.h"
+#include "list.h"
 
-struct con_nodes
-{
-	int index;
-	struct con_nodes *next;
-};
-
-struct con_nodes** make_undirected(int rows, Sparse_list *data, int **row_sums);
-void und(Sparse_half **A, int rows, int *row_sums);
+list* make_undirected(int rows, Sparse_list *data);
+void coloring(list *graph, int rows);
 
 int 
 main(int argc, char **argv)
 {
 	int N, rows, *row_sums, *connections;
 	Sparse_list *data = parse_data(argv[1]);
+	Sparse_list *a = data;
+	//while(a != NULL)
+	//{
+	//	printf("row %d, col %d, value %d\n", a->cell.row, a->cell.col, a->cell.value);
+	//	a = a->next;
+	//}
 	N = count_elements(&rows, data);
 	printf("N %d rows %d\n", N, rows);
 	//Sparse_half **adjacency = create_adjacency(N, rows, data, &row_sums);
-	int **r = malloc(rows * sizeof *r);
-	for (int i = 0; i < rows; i++)
-	{
-		r[i] = malloc(rows * sizeof **r);
-	}
-	//struct con_nodes **undirected = make_undirected(rows, data, &connections);
+	list *undirected = make_undirected(rows, data);
 	//und(adjacency, rows, row_sums);
+	//for (int i = 0; i < rows; i++)
+	//{
+	//	printf("size %d %d	", undirected[i].size, i);
+	//	linked_list *row = undirected[i].head;
+	//	while (row != NULL)
+	//	{
+	//		printf("%d ", row->value);
+	//		row = row->next;
+	//	}
+	//	printf("\n");
+	//}
+	coloring(undirected, rows);
 
 	return 0;
 }
 
 
-void
-append(struct con_nodes *current, int index)
+void 
+coloring(list *graph, int rows)
 {
-	struct con_nodes *next = malloc(sizeof *next);
-	if (next == NULL)
-	{
-		perror("Malloc");
-		exit(1);
-	}
-	next->index = index;
-	next->next = NULL;
-	current->next = next;
-}
+	srand(1300);
+	list *P;     // The palletes of colors for every vertex.
+	if ((P = malloc(rows * sizeof *P)) == NULL)
+		err_exit("Malloc");
+	
+	list U;           // The uncolored vertexes.
+	U.size = 0;
+	U.tail = NULL;
+	list I;          // The colored vertexes.
+	I.size = 0;
+	I.tail = NULL;
+	int *color; // The color of assigned to every vertex.
+	if ((color = malloc(rows * sizeof *color)) == NULL)
+		err_exit("Malloc");
+	
+	int *next_color; // The next color of a vertex in case the pallete
+			      // is empty
+	if ((next_color = malloc(rows * sizeof *next_color)) == NULL)
+		err_exit("Malloc");
+	
+	/* Find the biggest degree of the graph*/
+	int max = -1;
+	for (int row = 0; row <rows; row++)
+		if (graph[row].size > max)
+			max = graph[row].size;
 
-void
-und(Sparse_half **A, int rows, int *row_sums)
-{
+	int max_colors = max / 3;
+	max_colors = 4;
+
+	/* Initialize palletes and uncolored vertexes*/
 	for (int row = 0; row < rows; row++)
 	{
-		for (int col = 0; col < row_sums[row]; col++)
+		next_color[row] = max_colors + 1;
+		append(&U, row);
+		P[row].size = 0;
+		P[row].tail = NULL;
+		P[row].head = NULL;
+		for (int color = 0; color < max_colors; color++)
+			append(&P[row], color);
+	}
+
+	linked_list *a;
+	a = U.head;
+
+	int empty = 0;
+	int idle = 0;
+	linked_list *neighbor;
+	while (!empty)
+	{
+		//puts("round");
+		/* Assign random color to every vertex.*/
+		neighbor = U.head;
+		while (neighbor != NULL)
 		{
-			int found = 0;
-			for (int j = 0; j < row_sums[col]; j++)
+			int vertex = neighbor->value;
+			int index = rand() % P[vertex].size;
+			color[vertex] = get(P[vertex], index);
+			neighbor = neighbor->next;
+		}
+		
+		/* Check if a vertex has unique color*/
+		linked_list *vertex = U.head;
+		while (vertex != NULL)
+		{
+			int row = vertex->value;
+//			if (row %10000 == 0)
+//				printf("row %d\n", row);
+//
+			//for (int i = 0; i < P[row].size; i++)
+			//{
+			//	linked_list *b = P[row].head;
+			//	while(b != NULL)
+			//	{
+			//		printf("color %d \n", b->value);
+			//		b = b->next;
+			//	}
+			//}
+			neighbor = graph[row].head;
+			int different = 1;
+			while (neighbor != NULL)
 			{
-				if (A[col][j].col == row)
+				if (color[neighbor->value] == color[row])
 				{
-					found = 1;
+					different = 0;
 					break;
 				}
+				neighbor = neighbor->next;
 			}
 
-			if (!found)
+			/* For unique color update U, I and remove color from
+			 * his neighbors.
+			 */
+			vertex = vertex->next;
+			if (different)
 			{
-				row_sums[col]++;
-				printf("%d %d\n", row_sums[col], col);
-				if (row_sums[col] == 1)
-					A[col] = malloc(sizeof **A);
-				else
-					A[col] = realloc(A[col], row_sums[col]);
-				A[col][row_sums[col] - 1].col = row;
-				A[col][row_sums[col] - 1].value = 1;
+				neighbor = graph[row].head;
+				/* Delete color from palletes*/
+				for (; neighbor != NULL; neighbor = neighbor->next)
+					del(&P[neighbor->value], color[row]);
+
+				del(&U, row);
+				append(&I, row);
 			}
+
+			/* Feed the hungry*/
+			if (!P[row].size)
+			{
+				puts("o");
+				append(&P[row], next_color[row]);
+				next_color[row]++;	
+			}
+			//printf("Row %d Color %d\n", row, color[row]);
+			//linked_list *a = P[row].head;
+			//while (a != NULL)
+			//{
+			//	printf("%d\n", a->value);
+			//	a = a->next;
+			//}
 		}
+		printf("U size %d, I size %d\n", U.size, I.size);
+		
+		//linked_list *a = I.head;
+		//while (a != NULL)
+		//{
+		//	printf("vert %d color %d\n", a->value, color[a->value]);
+		//	a = a->next;
+		//}
+
+		if (I.size == 6)
+			idle++;
+		//if (idle > 2)
+		//	break;
+		if (I.size == rows)
+			empty = 1;
 	}
 }
 
-struct con_nodes**
-make_undirected(int rows, Sparse_list *data, int **row_sums)
+list*
+make_undirected(int rows, Sparse_list *data)
 {
 	Sparse_list *current = data;
 
 	/* An array with lists with the indexes of every connected node */
-	struct con_nodes **undirected;
-	undirected = malloc(rows * sizeof *undirected);
+	list *undirected = malloc(rows * sizeof *undirected);
 	if (undirected == NULL)
+		err_exit("Malloc");
+
+	/* Inititialize the lists.*/
+	for (int i = 0; i < rows; i++)
 	{
-		perror("Malloc");
-		exit(1);
+		undirected[i].head = &undirected[i].element;
+		undirected[i].element.value = -1;
+		undirected[i].size = 0;
+		undirected[i].tail = NULL;
+		undirected[i].head = NULL;
 	}
 	
 	/* Find the size of every row on the undirected graph */
-	int *connections;
-	if ((connections = malloc(rows * sizeof *connections)) == NULL)
-	{
-		perror("Malloc");
-		exit(1);
-	}
-	memset(connections, 0, rows);
-	struct con_nodes *head;
-	int counter = 0;
 	while (current != NULL)
 	{
 		int row_index = current->cell.row - 1;
 		int col_index = current->cell.col - 1;
-
-		if (counter % 1000 == 0)
-			printf("counter %d\n", counter);
-		counter++;
-		if (!connections[row_index])
-		{
-			undirected[row_index] = malloc(sizeof **undirected);
-			undirected[row_index]->index = col_index;
-			undirected[row_index]->next = NULL;
-			connections[row_index]++;
-		}
-		else
-		{
-			head = undirected[row_index];
-			int found = 0;
-			/* Go to the last entry of the list*/
-			while (head->next != NULL)
-			{
-				if (head->index == col_index)
-				{
-					found = 1;
-					break;
-				}
-				head = head->next;
-			}
-
-			/* Check the last element*/
-			if (head->index == col_index)
-				found = 1;
-
-			/* If the value of the col_index isn't in at the list
-			 * add it, else go to the next node
-			 */
-			if (!found)
-			{
-				append(head, col_index);
-				connections[row_index]++;
-			}
-		}
-
 		current = current->next;
+		append(&undirected[row_index], col_index);
+		append(&undirected[col_index], row_index);
 	}
 
-	current = data;
-	counter = 0;
-	while (current != NULL)
-	{
-		if (counter % 1000 == 0)
-			printf("counter %d\n", counter);
-		counter++;
-		int row_index = current->cell.row - 1;
-		int col_index = current->cell.col - 1;
-		if (!connections[col_index])
-		{
-			undirected[col_index] = malloc(sizeof **undirected);
-			undirected[col_index]->index = row_index;
-			undirected[col_index]->next = NULL;
-			connections[col_index]++;
-		}
-		else
-		{
-				head = undirected[col_index];
-				int found = 0;
-				/* Go to the last entry of the list*/
-				while (head->next != NULL)
-				{
-					if (head->index == row_index)
-					{
-						found = 1;
-						break;
-					}
-				head = head->next;
-				}
-
-				/* Check the last element*/
-				if (head->index == row_index)
-					found = 1;
-
-				/* If the value of the col_index isn't in at the list
-				 * add it, else go to the next node
-				 */
-				if (!found)
-				{
-					append(head, row_index);
-					connections[col_index]++;
-				}
-		}
-		current = current->next;
-	}
-
-	*row_sums = connections;
 	return undirected;
 }
