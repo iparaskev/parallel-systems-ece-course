@@ -10,8 +10,10 @@ append(list *l, int value)
 	if (l->tail == NULL)
 	{
 		l->element.value = value;
+		l->size++;
 		l->element.next = NULL;
 		l->tail = &(l->element);
+		l->head = &(l->element);
 	}
 	else
 	{
@@ -26,46 +28,81 @@ append(list *l, int value)
 		/* Add to the list*/
 		l->tail->next = new;
 		l->tail = new;
+		l->size++;
 	}
 }
 
 void
-remove(list *l, int value)
+del(list *l, int value)
 {
 	
 	linked_list *next; // The variable for deleting the node.
 
 	/* Check the rest elements.*/
-	while (l->head->next != l->tail)
-	{
+	if (l->size > 2)
+		while (l->head->next != l->tail)
+			if (l->head->next->value == value)
+			{
+				next = l->head->next;		
+				l->head->next = next->next;
+				l->size--;
+				free(next);
+			}
+			else
+				l->head = l->head->next; // Go to the next node
+
+	/* Check the last element.*/
+	if (l->size > 1)
 		if (l->head->next->value == value)
 		{
 			next = l->head->next;		
-			l->head->next = next->next;
+			l->head->next = NULL;
+			l->tail = l->head;
+			l->size--;
 			free(next);
 		}
-		else
-			l->head = l->head->next; // Go to the next node
-	}
-
-	/* Check the last element.*/
-	if (l->head->next->value == value)
-	{
-		next = l->head->next;		
-		l->head->next = NULL;
-		l->tail = l->head;
-		free(next);
-	}
 
 	l->head = &l->element;
 
 	/* Check the first element.*/
 	if (l->head->value == value)
 	{
-		l->head->value = l->head->next->value;
-		l->head->next = l->head->next->next;
+		l->size--;
+		if (l->size == 0)
+		{
+			l->head->value = -1;
+			l->head->next = NULL;
+			l->tail = NULL;
+		}
+		else
+		{
+			l->head->value = l->head->next->value;
+			l->head->next = l->head->next->next;
+		}
 	}
 
+}
+
+int
+get(list l, int index)
+{
+	int counter = 0;
+	int return_value;
+	while (l.head != NULL)
+	{
+		if (counter == index)
+		{
+			return_value = l.head->value;
+			break;
+		}
+		counter++;
+		l.head = l.head->next;
+	}
+
+	if (counter == l.size)
+		return -1;
+	else
+		return return_value;
 }
 
 //int 
@@ -88,14 +125,19 @@ remove(list *l, int value)
 //		current = current->next;
 //	}
 //	puts("after");
-//	delete(&l, 4);
-//	delete(&l, 0);
-//	delete(&l, 9);
+//	printf("found %d\n", get(l, 3));
+//	del(&l, 4);
+//	del(&l, 0);
+//	del(&l, 9);
+//	printf("found %d\n", get(l, 3));
 //	current = l.head;
 //	while (current != NULL)
 //	{
 //		printf("%d \n", current->value);
 //		current = current->next;
 //	}
+//	current = l.head;
+//	for (; current != NULL; current = current->next)
+//		printf("%d\n", current->value);
 //	return 0;
 //}
