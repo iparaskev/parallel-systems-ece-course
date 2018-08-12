@@ -44,140 +44,46 @@ main(int argc, char **argv)
 void 
 coloring(list *graph, int rows)
 {
-	srand(1300);
-	list *P;     // The palletes of colors for every vertex.
-	if ((P = malloc(rows * sizeof *P)) == NULL)
-		err_exit("Malloc");
-	
-	list U;           // The uncolored vertexes.
-	U.size = 0;
-	U.tail = NULL;
-	list I;          // The colored vertexes.
-	I.size = 0;
-	I.tail = NULL;
-	int *color; // The color of assigned to every vertex.
-	if ((color = malloc(rows * sizeof *color)) == NULL)
-		err_exit("Malloc");
-	
-	int *next_color; // The next color of a vertex in case the pallete
-			      // is empty
-	if ((next_color = malloc(rows * sizeof *next_color)) == NULL)
-		err_exit("Malloc");
-	
-	/* Find the biggest degree of the graph*/
-	int max = -1;
-	for (int row = 0; row <rows; row++)
-		if (graph[row].size > max)
-			max = graph[row].size;
-
-	int max_colors = max / 3;
-	max_colors = 4;
-
-	/* Initialize palletes and uncolored vertexes*/
+	/* The max colors is the maximum degree of the graph.*/
+	int max_colors = -1;
 	for (int row = 0; row < rows; row++)
+		if (graph[row].size > max_colors)
+			max_colors = graph[row].size;
+	max_colors++;
+
+	/* The array with the colors for every vertex.*/
+	int *color = malloc(rows * sizeof *color);
+	if (color == NULL)
+		err_exit("Malloc");
+	for (int i = 0; i < rows; i++)
+		color[i] = -1;
+
+	/* Array with the available colors for every node*/
+	int *available = malloc(max_colors * sizeof *available);
+	if (available == NULL)
+		err_exit("Malloc");
+
+	/* Assign the first color to the first vertex and start the procedure.*/
+	color[0] = 0;
+	for (int row = 1; row < rows; row++)
 	{
-		next_color[row] = max_colors + 1;
-		append(&U, row);
-		P[row].size = 0;
-		P[row].tail = NULL;
-		P[row].head = NULL;
-		for (int color = 0; color < max_colors; color++)
-			append(&P[row], color);
-	}
+		/* Make available all the colors*/
+		for (int i = 0; i < max_colors; i++)
+			available[i] = 1;
 
-	linked_list *a;
-	a = U.head;
+		/* Mark as unavailable the colors of the neighbors*/
+		linked_list *vertex = graph[row].head;
+		for (; vertex != NULL; vertex = vertex->next)
+			if (color[vertex->value] != -1)
+				available[color[vertex->value]] = 0;	
 
-	int empty = 0;
-	int idle = 0;
-	linked_list *neighbor;
-	while (!empty)
-	{
-		//puts("round");
-		/* Assign random color to every vertex.*/
-		neighbor = U.head;
-		while (neighbor != NULL)
-		{
-			int vertex = neighbor->value;
-			int index = rand() % P[vertex].size;
-			color[vertex] = get(P[vertex], index);
-			neighbor = neighbor->next;
-		}
-		
-		/* Check if a vertex has unique color*/
-		linked_list *vertex = U.head;
-		while (vertex != NULL)
-		{
-			int row = vertex->value;
-//			if (row %10000 == 0)
-//				printf("row %d\n", row);
-//
-			//for (int i = 0; i < P[row].size; i++)
-			//{
-			//	linked_list *b = P[row].head;
-			//	while(b != NULL)
-			//	{
-			//		printf("color %d \n", b->value);
-			//		b = b->next;
-			//	}
-			//}
-			neighbor = graph[row].head;
-			int different = 1;
-			while (neighbor != NULL)
+		/*Give the first available color*/
+		for (int i = 0; i < max_colors; i++)
+			if (available[i])
 			{
-				if (color[neighbor->value] == color[row])
-				{
-					different = 0;
-					break;
-				}
-				neighbor = neighbor->next;
+				color[row] = i;
+				break;
 			}
-
-			/* For unique color update U, I and remove color from
-			 * his neighbors.
-			 */
-			vertex = vertex->next;
-			if (different)
-			{
-				neighbor = graph[row].head;
-				/* Delete color from palletes*/
-				for (; neighbor != NULL; neighbor = neighbor->next)
-					del(&P[neighbor->value], color[row]);
-
-				del(&U, row);
-				append(&I, row);
-			}
-
-			/* Feed the hungry*/
-			if (!P[row].size)
-			{
-				puts("o");
-				append(&P[row], next_color[row]);
-				next_color[row]++;	
-			}
-			//printf("Row %d Color %d\n", row, color[row]);
-			//linked_list *a = P[row].head;
-			//while (a != NULL)
-			//{
-			//	printf("%d\n", a->value);
-			//	a = a->next;
-			//}
-		}
-		printf("U size %d, I size %d\n", U.size, I.size);
-		
-		//linked_list *a = I.head;
-		//while (a != NULL)
-		//{
-		//	printf("vert %d color %d\n", a->value, color[a->value]);
-		//	a = a->next;
-		//}
-
-		if (I.size == 6)
-			idle++;
-		//if (idle > 2)
-		//	break;
-		if (I.size == rows)
-			empty = 1;
 	}
 }
 
