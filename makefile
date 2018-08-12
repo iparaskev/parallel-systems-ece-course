@@ -21,10 +21,10 @@ OBJ = $(patsubst %, $(OBJD)/%,$(_OBJ))
 all: $(RUN)
 
 $(OBJD)/%.o: $(SRC)/%.c $(DEPS)
-	$(CC) -c -pthread -o $@ $< $(CFLAGS)$(HEADERS) 
+	$(CC) -c -fopenmp -pthread -o $@ $< $(CFLAGS)$(HEADERS) 
 
 pagerank: $(OBJ) 
-	$(CC) -pthread -o $(BIN)/$@ $^
+	$(CC) -pthread -fopenmp -o $(BIN)/$@ $^
 
 clean:
 	$(RM) $(OBJD)/*

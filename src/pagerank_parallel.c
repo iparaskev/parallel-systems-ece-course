@@ -25,13 +25,6 @@ static pthread_mutex_t mutex_done = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond_main = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t cond_thr = PTHREAD_COND_INITIALIZER;
 
-/* Function to print error and exit the process for visual reasons */
-void 
-err_exit(char *arg)
-{
-	fprintf(stderr, "%s\n", arg);
-	exit(1);
-}
 
 void*
 compute_row(void *args)

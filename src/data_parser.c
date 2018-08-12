@@ -60,6 +60,7 @@ parse_data(char *filename)
 			current_node->cell.value = 1;
 			
 			current_node->next = NULL;
+
 			/*Initialize the next element.*/
 			if ((next = malloc(sizeof *next)) == NULL){
 				perror("Malloc");
