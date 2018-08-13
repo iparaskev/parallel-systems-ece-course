@@ -4,3 +4,4 @@ matlab_pagerank
 bin
 obj
 tmp/
+*.bin

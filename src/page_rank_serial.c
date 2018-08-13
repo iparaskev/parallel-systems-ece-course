@@ -1,5 +1,6 @@
 #include "data_parser.h"
 #include "constants.h"
+#include "globals.h"
 #include "helper.h"
 #include "page_rank_serial.h"
 #include <stdlib.h>
@@ -7,7 +8,7 @@
 #include <omp.h>
 
 double*
-gs_mult(Sparse_half **A, double **x, double *b, int rows, int *row_sums)
+gs_mult(Sparse_half **A, double **x, double *b)
 {
 	double *x_new, *x_old;
 	x_new = *x;
@@ -41,7 +42,7 @@ gs_mult(Sparse_half **A, double **x, double *b, int rows, int *row_sums)
 
 
 double*
-pagerank(Sparse_half **adjacency, int rows, int *row_sums)
+pagerank(Sparse_half **adjacency) 
 {
 	/* Gauss seidel solves the Ax=b equation and the algebraic version of
 	 * pagerank is R = (I - dM)^(-1) * (1-d/N). So for our problem at Gauss
@@ -67,17 +68,17 @@ pagerank(Sparse_half **adjacency, int rows, int *row_sums)
 	int iterations = 0;
 	double delta = 1;
 	double t, t_s;
-	while (iterations < MAX_ITERATIONS)
+	while (delta > TOL && iterations < MAX_ITERATIONS)
 	{
 		t = now();
-		x_old = gs_mult(adjacency, &x, b, rows, row_sums);	
+		x_old = gs_mult(adjacency, &x, b);	
 		t_s = now() - t;
 		delta = norm(x, x_old, rows);
 		printf("iteration: %d delta: %0.15f time: %0.15f\n", iterations, delta, t_s);
 		iterations++;
 		free(x_old);
 	}
-	normalize(&x, rows);
+	normalize(&x);
 	printf("Iterations %d delta %.15f\n", iterations-1, delta);
 
 	/* Clean up */

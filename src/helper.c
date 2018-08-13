@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <helper.h>
-#include <sparse.h>
+#include "helper.h"
+#include "sparse.h"
 #include <math.h>
 #include <string.h>
-#include <constants.h>
+#include "constants.h"
 #include <sys/time.h>
+#include "globals.h"
 
 /* Computes the complete adjacency matrix from the sparse list, also it fills
  * the rows with all zeros with a normal distribuded row.
@@ -22,7 +23,7 @@
  * The final sparse array.
  */ 
 Sparse_half**
-create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
+create_adjacency(int N, Sparse_list *dataset)
 {
 	/* Find the total outgoing link for every node.*/
 	/* An array to store the number of outgoing edges of every node*/
@@ -32,7 +33,6 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		perror("Malloc at creation of outgoing");
 		exit(1);
 	}
-	memset(outgoing, 0, rows); 
 
 	/* An array to store the number of incoming edges of every node*/
 	int *incoming; 
@@ -41,7 +41,21 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		perror("Malloc at creation of incoming");
 		exit(1);
 	}
-	memset(incoming, 0, rows); // Initialization of the sums array.
+
+	/* An array for tracking at each row at which element we are.*/
+	int *indexes;
+	if ((indexes = malloc(rows * sizeof *indexes)) == NULL)
+	{
+		perror("Malloc");
+		exit(1);
+	}
+
+	for (int i = 0; i < rows; i++)
+	{
+		outgoing[i] = 0;
+		incoming[i] = 0;
+		indexes[i] = 0;
+	}
 
 	/* Go through the list to count the incoming and outgoing edges*/
 	Sparse_list *current = dataset;
@@ -70,14 +84,6 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		}
 	}
 
-	/* An array for tracking at each row at which element we are.*/
-	int *indexes;
-	if ((indexes = malloc(rows * sizeof *indexes)) == NULL)
-	{
-		perror("Malloc");
-		exit(1);
-	}
-	memset(indexes, 0, rows);
 
 	/* Fill the adjacency matrix.*/
 	current = dataset;
@@ -92,7 +98,7 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
 		current = current->next;
 	}
 	
-	*row_elements = incoming;
+	row_sums = incoming;
 	return adjacency;
 }
 
@@ -106,7 +112,7 @@ create_adjacency(int N, int rows, Sparse_list *dataset, int **row_elements)
  * N -- the number of sparse cells
  */
 int 
-count_elements(int *rows, Sparse_list *array)
+count_elements(Sparse_list *array)
 {
 	int last_index = -1;
 	int N = 0;
@@ -119,7 +125,7 @@ count_elements(int *rows, Sparse_list *array)
 		N++;
 	}
 
-	*rows = last_index;
+	rows = last_index;
 	return N;
 }
 
@@ -135,7 +141,7 @@ norm(double *a, double *b, int N)
 }
 
 void
-normalize(double **x_init, int rows)
+normalize(double **x_init)
 {
 	double sumo = 0;
 	double *x = *x_init;
