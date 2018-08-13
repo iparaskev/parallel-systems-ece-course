@@ -21,19 +21,46 @@ main(int argc, char **argv)
 	/* Read the dataset and count the nodes.*/
 	Sparse_list *array = parse_data(dataset_path);	
 	N = count_elements(array);
-	printf("%d %d\n", N, rows);
+	//printf("%d %d\n", N, rows);
 	Sparse_half **adjacency = create_adjacency(N, array);
-	free(array);
-	puts("ok adj");
 
+	/* Decide which method will be used*/
+	int par = atoi(argv[2]);
+	if (par)
+	{
+		/* graph preprocessing.*/
+		list *graph = make_undirected(array); 
+		int *color = coloring(graph);
+		free(graph);
+		Sparse_half **A = partitions(adjacency, color);
+		//for(int i = 0; i < 100; i++)
+		//	printf("%d index %d\n", i, indexes[i]);
+	
+		t_start = now();
+		R = pagerank(A);
+		t_end = now();
+
+		/* Convert back the graph for validation*/
+		double *R1 = malloc(rows * sizeof *R1);
+		for (int i = 0; i < rows; i++)
+			R1[indexes[i]] = R[i];
+		free(R);
+		R = R1;
+	}
+	else
+	{
+		t_start = now();
+		R = pagerank(adjacency);
+		t_end = now();
+
+	}
+	free(array);
+	
 	/* Begin pagerank process*/
-	t_start = now();
-	//if (!strcmp(argv[1], "par"))
-	//	R = pagerank_par(adjacency, rows, row_sums);
-	//else
-	R = pagerank(adjacency);
-	t_end = now();
 	printf("Time passed %0.10f \n", elapsed_time(t_start, t_end));
+
+	for (int i = 0; i < 10; i++)
+		printf("%f \n", R[i]);
 	save_results(R, rows);
 	free(adjacency);
 

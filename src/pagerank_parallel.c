@@ -1,10 +1,11 @@
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include "helper.h"
-//#include "constants.h"
-//#include <pthread.h>
-//
-//#define NUM_THREADS 1
+#include <stdlib.h>
+#include <stdio.h>
+#include "helper.h"
+#include "constants.h"
+#include "globals.h"
+#include <omp.h>
+
+#define NUM_THREADS 2
 //
 ///* Global variables */
 //double *x_new;        // The pagerank vector.
