@@ -1,48 +1,49 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include "data_parser.h"
+#include "quick_sort.h"
+#include "graph_coloring.h"
+#include "globals.h"
 #include "helper.h"
-#include "list.h"
 
-list* make_undirected(int rows, Sparse_list *data);
-void coloring(list *graph, int rows);
-
-int 
-main(int argc, char **argv)
+Sparse_half**
+partitions(Sparse_half **A, int *color)
 {
-	int N, rows, *row_sums, *connections;
-	Sparse_list *data = parse_data(argv[1]);
-	Sparse_list *a = data;
-	//while(a != NULL)
-	//{
-	//	printf("row %d, col %d, value %d\n", a->cell.row, a->cell.col, a->cell.value);
-	//	a = a->next;
-	//}
-	N = count_elements(&rows, data);
-	printf("N %d rows %d\n", N, rows);
-	//Sparse_half **adjacency = create_adjacency(N, rows, data, &row_sums);
-	list *undirected = make_undirected(rows, data);
-	//und(adjacency, rows, row_sums);
-	//for (int i = 0; i < rows; i++)
-	//{
-	//	printf("size %d %d	", undirected[i].size, i);
-	//	linked_list *row = undirected[i].head;
-	//	while (row != NULL)
-	//	{
-	//		printf("%d ", row->value);
-	//		row = row->next;
-	//	}
-	//	printf("\n");
-	//}
-	coloring(undirected, rows);
 
-	return 0;
+	/* Make an array with the sorted indexes to use it after*/
+	indexes = malloc(rows * sizeof *indexes);
+	if (indexes == NULL)
+		err_exit("Malloc");
+	for (int i = 0; i < rows; i++)
+		indexes[i] = i;
+
+	/* Sort the color array and change the indexes to partition the array*/
+	quickSort(color, indexes, 0, rows - 1);
+
+	/* An array that has the new index for every vertex*/
+	int *map = malloc(rows * sizeof *map);
+	if (map == NULL)
+		err_exit("Malloc");
+	for (int row = 0; row < rows; row++)
+		map[indexes[row]] = row; 
+		
+	/* The new partitioned adjacency matrix*/
+	Sparse_half **A_new = malloc(rows * sizeof *A_new);
+	if (A_new == NULL)
+		err_exit("Malloc");
+
+	for (int row = 0; row < rows; row++)
+	{
+		A_new[row] = A[indexes[row]];
+		/* Update the indexes inside the row*/
+		for (int col = 0; col < row_sums[indexes[row]]; col++)
+			A_new[row][col].col = map[A_new[row][col].col];
+	}
+	
+	return A_new;
 }
 
-
-void 
-coloring(list *graph, int rows)
+int* 
+coloring(list *graph)
 {
 	/* The max colors is the maximum degree of the graph.*/
 	int max_colors = -1;
@@ -85,10 +86,12 @@ coloring(list *graph, int rows)
 				break;
 			}
 	}
+
+	return color;
 }
 
 list*
-make_undirected(int rows, Sparse_list *data)
+make_undirected(Sparse_list *data)
 {
 	Sparse_list *current = data;
 
@@ -100,20 +103,17 @@ make_undirected(int rows, Sparse_list *data)
 	/* Inititialize the lists.*/
 	for (int i = 0; i < rows; i++)
 	{
-		undirected[i].head = &undirected[i].element;
 		undirected[i].element.value = -1;
 		undirected[i].size = 0;
 		undirected[i].tail = NULL;
 		undirected[i].head = NULL;
 	}
 	
-	/* Find the size of every row on the undirected graph */
 	while (current != NULL)
 	{
 		int row_index = current->cell.row - 1;
 		int col_index = current->cell.col - 1;
 		current = current->next;
-		append(&undirected[row_index], col_index);
 		append(&undirected[col_index], row_index);
 	}
 
