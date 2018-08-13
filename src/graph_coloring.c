@@ -17,7 +17,7 @@ partitions(Sparse_half **A, int *color)
 		indexes[i] = i;
 
 	/* Sort the color array and change the indexes to partition the array*/
-	quickSort(color, indexes, 0, rows - 1);
+	quick_sort(color, indexes, 0, rows - 1);
 
 	/* An array that has the new index for every vertex*/
 	int *map = malloc(rows * sizeof *map);
@@ -31,14 +31,22 @@ partitions(Sparse_half **A, int *color)
 	if (A_new == NULL)
 		err_exit("Malloc");
 
+	/* The new row sums array.*/
+	int *elements = malloc(rows * sizeof *elements);
+	if (elements == NULL)
+		err_exit("Malloc");
+
 	for (int row = 0; row < rows; row++)
 	{
 		A_new[row] = A[indexes[row]];
+		elements[row] = row_sums[indexes[row]];
 		/* Update the indexes inside the row*/
 		for (int col = 0; col < row_sums[indexes[row]]; col++)
 			A_new[row][col].col = map[A_new[row][col].col];
 	}
-	
+
+
+	row_sums = elements;
 	return A_new;
 }
 
