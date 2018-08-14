@@ -13,26 +13,37 @@ void swap(int* a, int* b, int* i, int *j)
 }
 
 int
-partition(int *arr, int *index, int low, int high)
+partition(int *arr, int *index, int low, int high, int *g_t)
 {
+
 	int pivot = arr[low];
-	int i = low - 1;
-	int j = high + 1;
+	int lt = low;
+	int gt = high - 1;
+	int i = low;
 
 	while(1)
 	{
-		do
+		if (arr[i] < pivot)
+		{
+			swap(&arr[i], &arr[lt], &index[i], &index[lt]);
+			lt++;
 			i++;
-		while (arr[i] < pivot);
+		}
+		else if (arr[i] > pivot)
+		{
+			swap(&arr[i], &arr[gt], &index[i], &index[gt]);
+			gt--;
 
-		do
-			j--;
-		while (arr[j] > pivot);
+		}
+		else
+			i++;
 
-		if (i >= j)
-			return j;
+		if (i >= gt)
+		{
+			*g_t = gt;
+			return lt;
+		}
 
-		swap(&arr[i], &arr[j], &index[i], &index[j]);
 	}
 }
 
@@ -40,9 +51,10 @@ void quick_sort(int *arr, int *index, int low, int high)
 {
 	if (low < high)
 	{
-		int pivot_index = partition(arr, index, low, high);
+		int gt;
+		int lt = partition(arr, index, low, high, &gt);
 
-		quick_sort(arr, index, low, pivot_index);
-		quick_sort(arr, index, pivot_index + 1, high);
+		quick_sort(arr, index, low, lt - 1);
+		quick_sort(arr, index, gt + 1, high);
 	}
 }
