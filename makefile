@@ -24,7 +24,7 @@ $(OBJD)/%.o: $(SRC)/%.c $(DEPS)
 	$(CC) -c -fopenmp -o $@ $< $(CFLAGS)$(HEADERS) 
 
 pagerank: $(OBJ) 
-	$(CC) -pthread -o $(BIN)/$@ $^
+	$(CC) -fopenmp -o $(BIN)/$@ $^
 
 clean:
 	$(RM) $(OBJD)/*
