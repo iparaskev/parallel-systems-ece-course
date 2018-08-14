@@ -6,7 +6,7 @@
 #include "helper.h"
 
 Sparse_half**
-partitions(Sparse_half **A, int *color)
+partitions(Sparse_half **A, int *color, list *borders)
 {
 
 	/* Make an array with the sorted indexes to use it after*/
@@ -45,7 +45,12 @@ partitions(Sparse_half **A, int *color)
 			A_new[row][col].col = map[A_new[row][col].col];
 	}
 
+	
+	/* Clean up*/
+	free(row_sums);
+	free(map);
 
+	find_borders(borders, color);
 	row_sums = elements;
 	return A_new;
 }
@@ -126,4 +131,20 @@ make_undirected(Sparse_list *data)
 	}
 
 	return undirected;
+}
+
+void
+find_borders(list *borders, int *color)
+{
+	borders->head = NULL;
+	borders->tail = NULL;
+	borders->size = 0;
+
+	int current = color[0];
+	for (int row = 1; row < rows; row++)
+		if (color[row] != current)
+		{
+			append(borders, row);
+			current = color[row];
+		}
 }

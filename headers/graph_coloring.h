@@ -6,6 +6,7 @@
 
 list* make_undirected(Sparse_list *data);
 int* coloring(list *graph);
-Sparse_half** partitions(Sparse_half **A, int *color);
+Sparse_half** partitions(Sparse_half **A, int *color, list *borders);
+void find_borders(list *borders, int *color);
 
 #endif
