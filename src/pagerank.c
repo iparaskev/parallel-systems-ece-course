@@ -32,12 +32,15 @@ main(int argc, char **argv)
 		list *graph = make_undirected(array); 
 		int *color = coloring(graph);
 		free(graph);
-		Sparse_half **A = partitions(adjacency, color);
-		//for(int i = 0; i < 100; i++)
-		//	printf("%d index %d\n", i, indexes[i]);
-	
+		free(array);
+
+		/* Partition the graph*/
+		list *borders = malloc(sizeof *borders);
+		Sparse_half **A = partitions(adjacency, color, borders);
+
 		t_start = now();
-		R = pagerank(A);
+		//R = pagerank(A);
+		R = pagerank_par(A, borders);
 		t_end = now();
 
 		/* Convert back the graph for validation*/
@@ -61,7 +64,11 @@ main(int argc, char **argv)
 
 	for (int i = 0; i < 10; i++)
 		printf("%f \n", R[i]);
+
 	save_results(R, rows);
+
+	for (int i = 0; i < rows; i++)
+		free(adjacency[i]);
 	free(adjacency);
 
 	return 0;
