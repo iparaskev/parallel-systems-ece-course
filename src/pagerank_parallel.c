@@ -6,7 +6,7 @@
 #include "list.h"
 #include <omp.h>
 
-#define NUM_THREADS 2
+#define NUM_THREADS 4
 
 /* Global variables*/
 double *x_old;

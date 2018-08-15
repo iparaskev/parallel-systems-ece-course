@@ -74,7 +74,7 @@ pagerank(Sparse_half **adjacency)
 		x_old = gs_mult(adjacency, &x, b);	
 		t_s = now() - t;
 		delta = norm(x, x_old, rows);
-		//printf("iteration: %d delta: %0.15f time: %0.15f\n", iterations, delta, t_s);
+		//printf("iteration: %d delta: %0.15f \n", iterations, delta);
 		iterations++;
 		free(x_old);
 	}

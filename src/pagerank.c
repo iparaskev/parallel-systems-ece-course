@@ -28,6 +28,7 @@ main(int argc, char **argv)
 	int par = atoi(argv[2]);
 	if (par)
 	{
+		srand(1000);
 		/* graph preprocessing.*/
 		list *graph = make_undirected(array); 
 		int *color = coloring(graph);
@@ -37,6 +38,9 @@ main(int argc, char **argv)
 		/* Partition the graph*/
 		list *borders = malloc(sizeof *borders);
 		Sparse_half **A = partitions(adjacency, color, borders);
+		linked_list *a = borders->head;
+//		for (; a != NULL; a = a->next)
+//			printf("%d\n", a->value);
 
 		t_start = now();
 		//R = pagerank(A);

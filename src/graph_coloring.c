@@ -44,7 +44,6 @@ partitions(Sparse_half **A, int *color, list *borders)
 		for (int col = 0; col < row_sums[indexes[row]]; col++)
 			A_new[row][col].col = map[A_new[row][col].col];
 	}
-
 	
 	/* Clean up*/
 	free(row_sums);
@@ -64,6 +63,7 @@ coloring(list *graph)
 		if (graph[row].size > max_colors)
 			max_colors = graph[row].size;
 	max_colors++;
+	max_colors = 400;
 
 	/* The array with the colors for every vertex.*/
 	int *color = malloc(rows * sizeof *color);
@@ -79,6 +79,7 @@ coloring(list *graph)
 
 	/* Assign the first color to the first vertex and start the procedure.*/
 	color[0] = 0;
+	double t = now();
 	for (int row = 1; row < rows; row++)
 	{
 		/* Make available all the colors*/
@@ -100,6 +101,8 @@ coloring(list *graph)
 			}
 	}
 
+	printf("g %f \n", now() - t);
+	//exit(1);
 	return color;
 }
 
@@ -128,6 +131,7 @@ make_undirected(Sparse_list *data)
 		int col_index = current->cell.col - 1;
 		current = current->next;
 		append(&undirected[col_index], row_index);
+		append(&undirected[row_index], col_index);
 	}
 
 	return undirected;
