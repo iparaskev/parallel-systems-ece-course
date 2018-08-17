@@ -63,7 +63,7 @@ coloring(list *graph)
 		if (graph[row].size > max_colors)
 			max_colors = graph[row].size;
 	max_colors++;
-	max_colors = 400;
+	max_colors = 100;
 
 	/* The array with the colors for every vertex.*/
 	int *color = malloc(rows * sizeof *color);
@@ -99,10 +99,17 @@ coloring(list *graph)
 				color[row] = i;
 				break;
 			}
+
+		/* Update the pallete in case all colors are unavailable.*/
+		if (color[row] == -1)
+		{
+			color[row] = max_colors;
+			max_colors += 100;
+			available = realloc(available, max_colors * sizeof *available);
+		}
 	}
 
-	printf("g %f \n", now() - t);
-	//exit(1);
+	free(available);
 	return color;
 }
 
