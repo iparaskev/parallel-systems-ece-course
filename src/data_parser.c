@@ -1,7 +1,8 @@
-#include "data_parser.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "data_parser.h"
+#include "helper.h"
 
 #define MAX_LENGTH 50
 
@@ -10,18 +11,15 @@ parse_data(char *filename)
 {
 	/*Initialize the datastructure.*/
 	Sparse_list *data, *next, *current_node;
-	if ((data = malloc(sizeof *data)) == NULL){
-		perror("Malloc");
-		exit(1);
-	}
+	if ((data = malloc(sizeof *data)) == NULL)
+		err_exit("Malloc");
+
 	current_node = data;
 
 	/*Read file.*/
 	FILE *fd;
-	if ((fd = fopen(filename, "r")) == NULL){
-		fprintf(stderr, "Error opening the dataset file.");
-		exit(1);
-	}
+	if ((fd = fopen(filename, "r")) == NULL)
+		err_exit("Error opening the dataset file.");
 	
 	/* Initialize the parser's buffer*/
 	char buffer[MAX_LENGTH];		
@@ -43,18 +41,14 @@ parse_data(char *filename)
 			/* Get the values of the sparse array from the buffer*/	
 			number = strtok(buffer, "\t");
 			if (number == NULL)
-			{
-				fprintf(stderr, "Error at finding next node.");
-				exit(1);
-			}
+				err_exit("Error at finding next node.");
+
 			current_node->cell.row = atoi(number);
 
 			number = strtok(NULL, "\t");
 			if (number == NULL)
-			{
-				fprintf(stderr, "Error at finding next node.");
-				exit(1);
-			}
+				err_exit("Error at finding next node.");
+
 			current_node->cell.col = atoi(number);
 			
 			current_node->cell.value = 1;
@@ -62,10 +56,8 @@ parse_data(char *filename)
 			current_node->next = NULL;
 
 			/*Initialize the next element.*/
-			if ((next = malloc(sizeof *next)) == NULL){
-				perror("Malloc");
-				exit(1);
-			}
+			if ((next = malloc(sizeof *next)) == NULL)
+				err_exit("Malloc");
 
 			/*Zero buffer.*/
 			memset(buffer, 0, MAX_LENGTH);
@@ -74,10 +66,8 @@ parse_data(char *filename)
 		}
 	}		
 
-	if (fclose(fd) == EOF){
-		fprintf(stderr, "Error closing the file.\n");
-		exit(1);
-	}
+	if (fclose(fd) == EOF)
+		err_exit("Error closing the file.");
 
 	return data;
 }

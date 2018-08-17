@@ -98,6 +98,8 @@ create_adjacency(int N, Sparse_list *dataset)
 		current = current->next;
 	}
 	
+	free(outgoing);
+	free(indexes);
 	row_sums = incoming;
 	return adjacency;
 }
@@ -153,9 +155,9 @@ normalize(double **x_init)
 
 /* Save pagerank result at a binary file.*/
 void 
-save_results(double *x, int N)
+save_results(double *x, int N, char *filename)
 {
-	FILE *f = fopen("results.bin", "wb");
+	FILE *f = fopen(filename, "wb");
 	if (f == NULL)
 	{
 		perror("Opening the results file");
@@ -195,6 +197,7 @@ validate(double *x, int N, char *filename)
 	/* Get the norm of the two vectors.*/
 	double difference = norm(x, matlab_pagerank, N);
 	printf("The l1 norm of the two vectors is %.10f.\n", difference);
+	free(matlab_pagerank);
 }
 
 /* Get current timestamp at seconds*/

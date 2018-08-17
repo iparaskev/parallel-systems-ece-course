@@ -6,8 +6,6 @@
 #include "list.h"
 #include <omp.h>
 
-#define NUM_THREADS 4
-
 /* Global variables*/
 double *x_old;
 double *x;
@@ -18,7 +16,7 @@ gs_mult_par(Sparse_half **A, double *b, int start, int end)
 	
 	double a_ii, value, x_i;
 	int real_col;
-	#pragma omp parallel for num_threads(NUM_THREADS)
+	#pragma omp parallel for num_threads(num_thread)
 	for (int row = start; row < end; row++)
 	{
 		a_ii = 1.;

@@ -50,7 +50,6 @@ pagerank(Sparse_half **adjacency)
 	 */
 
 	/* Initialize b vector and initial pagerank*/
-	puts("ok pa");
 	double *b, *x, *x_old;
 	b = malloc(rows * sizeof *x);
 	if ((x = malloc(rows * sizeof *x)) == NULL)
@@ -58,7 +57,7 @@ pagerank(Sparse_half **adjacency)
 		perror("Malloc at x");
 		exit(1);
 	}
-	printf("rows %d\n", rows);
+
 	for (int i = 0; i < rows; i++)
 	{
 		b[i] = (1 - D) / rows;
@@ -74,7 +73,6 @@ pagerank(Sparse_half **adjacency)
 		x_old = gs_mult(adjacency, &x, b);	
 		t_s = now() - t;
 		delta = norm(x, x_old, rows);
-		//printf("iteration: %d delta: %0.15f \n", iterations, delta);
 		iterations++;
 		free(x_old);
 	}
