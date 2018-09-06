@@ -133,9 +133,25 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		t_start = now();
-		R = pagerank(adjacency);
-		t_end = now();
+		if (parallel)
+		{
+			/* Make the last row as the only border*/
+			list *borders = malloc(sizeof *borders);
+			borders->head = &borders->element;
+			borders->tail = NULL;
+			borders->element.value = rows;
+			borders->element.next = NULL;
+			t_start = now();
+			R = pagerank_par(adjacency, borders);
+			t_end = now();
+
+		}
+		else
+		{
+			t_start = now();
+			R = pagerank(adjacency);
+			t_end = now();
+		}
 
 	}
 	free(array);
