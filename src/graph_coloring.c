@@ -54,16 +54,21 @@ partitions(Sparse_half **A, int *color, list *borders)
 	return A_new;
 }
 
+/* Function that does the graph coloring of the undirected graph of pagerank 
+ * pages.
+ *
+ *
+ * Arguments:
+ * graph -- the undirected graph.
+ *
+ * Output:
+ * colors -- An integer array that has the color of every node
+ */
 int* 
 coloring(list *graph)
 {
 	/* The max colors is the maximum degree of the graph.*/
-	int max_colors = -1;
-	for (int row = 0; row < rows; row++)
-		if (graph[row].size > max_colors)
-			max_colors = graph[row].size;
-	max_colors++;
-	max_colors = 100;
+	int max_colors = 100;
 
 	/* The array with the colors for every vertex.*/
 	int *color = malloc(rows * sizeof *color);
@@ -79,7 +84,6 @@ coloring(list *graph)
 
 	/* Assign the first color to the first vertex and start the procedure.*/
 	color[0] = 0;
-	double t = now();
 	for (int row = 1; row < rows; row++)
 	{
 		/* Make available all the colors*/
@@ -105,7 +109,8 @@ coloring(list *graph)
 		{
 			color[row] = max_colors;
 			max_colors += 100;
-			available = realloc(available, max_colors * sizeof *available);
+			available = realloc(available, 
+					    max_colors * sizeof *available);
 		}
 	}
 
