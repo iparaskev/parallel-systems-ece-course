@@ -17,7 +17,7 @@ partitions(Sparse_half **A, int *color, list *borders)
 		indexes[i] = i;
 
 	/* Sort the color array and change the indexes to partition the array*/
-	quick_sort(color, indexes, 0, rows - 1);
+	quick_sort(color, indexes, 0, rows);
 
 	/* An array that has the new index for every vertex*/
 	int *map = malloc(rows * sizeof *map);
