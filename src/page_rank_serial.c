@@ -78,6 +78,7 @@ pagerank(Sparse_half **adjacency)
 	}
 	normalize(&x);
 	printf("Iterations %d delta %.15f\n", iterations-1, delta);
+	//printf("%d\n", iterations-1);
 
 	/* Clean up */
 	free(b);

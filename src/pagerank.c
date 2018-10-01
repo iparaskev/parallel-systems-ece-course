@@ -144,6 +144,7 @@ main(int argc, char **argv)
 			t_start = now();
 			R = pagerank_par(adjacency, borders);
 			t_end = now();
+			free(borders);
 
 		}
 		else
@@ -157,6 +158,7 @@ main(int argc, char **argv)
 	free(array);
 	
 	printf("Time passed %0.10f \n", elapsed_time(t_start, t_end));
+	//printf("%0.10f\n", elapsed_time(t_start, t_end));
 
 	if (save)
 		save_results(R, rows, save_file);

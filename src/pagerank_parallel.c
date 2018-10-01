@@ -95,6 +95,7 @@ pagerank_par(Sparse_half **adjacency, list *borders)
 	}
 	normalize(&x);
 	printf("Iterations %d delta %.15f\n", iterations-1, delta);
+	//printf("%d\n", iterations-1);
 
 	/* Clean up */
 	free(b);
