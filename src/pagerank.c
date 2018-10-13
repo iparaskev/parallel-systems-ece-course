@@ -75,12 +75,12 @@ main(int argc, char **argv)
 	if (help)
 	{
 		printf("-h: help\n"
-			"-d: the input dataset\n"
+			"-d: the input dataset from the path after the flag\n"
 			"-p: use parallel algorithm\n"
 			"-t: the number of threads\n"
 			"-c: use graph coloring\n"
-			"-s: save results to given file after option\n"
-			"-v: validate results using the vector from file after option\n");
+			"-s: save results to given file after the flag\n"
+			"-v: validate results using the vector from file after flag\n");
 		exit(1);
 	}
 
