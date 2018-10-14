@@ -3,9 +3,9 @@
 
 ---
 
-* [parallel_bitonic]():\
+* [parallel_bitonic](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/parallel_bitonic_sort):\
 A parallel implementation of bitonic sort using cilk, openmp and pthreads.
-* [mpi_knn]():
-* [cuda_mean_shift]()
+* [mpi_knn](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/knn_mpi):
+* [cuda_mean_shift](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/cuda_mean_shift)
 * [parallel_pagerank](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/parallel_pagerank):\
 An implementation for solving the pagerank problem with the Gauss-Seidel method using openmp.
