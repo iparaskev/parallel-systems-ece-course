@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#include "headers/openmp.h"
+#include "openmp.h"
 
 static const int ASCENDING = 1;
 static const int DESCENDING = 0;
@@ -115,10 +115,10 @@ void ompRecBitonicSort(int lo,int cnt,int dir)
   }
 }
 
-/** function sort()
+/* function sort()
     Caller of ompRecBitonicSort for sorting the entire array of length N
     in ASCENDING order
-**/
+*/
 void ompSort(int N,int n_thr)
 {	
 	omp_set_nested(1);
@@ -127,6 +127,7 @@ void ompSort(int N,int n_thr)
 	omp_init_lock(&writelock);
 	ompRecBitonicSort(0,N,ASCENDING);
 }
+
 void ompImpBitonicSort(int N,int n_thr)
 {
 	

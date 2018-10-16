@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "headers/simpleBitonic.h"
-#include "headers/openmp.h"
-#include "headers/pthreadsSort.h"
-#include "headers/cilk.h"
+#include "simpleBitonic.h"
+#include "openmp.h"
+#include "pthreadsSort.h"
+#include "cilk.h"
 #include <sys/time.h>
 
 struct timeval startwtime, endwtime;

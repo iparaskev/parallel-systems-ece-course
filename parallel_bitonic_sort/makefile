@@ -1,21 +1,38 @@
-SHELL :=/bin/bash
+SHELL := /bin/bash
 
-#================================
-#COMMANDS
+# VARIABLES
+CC = gcc
+RM = rm -f
+RUN = test
+MKDIR = mkdir -p
+_OBJ = testAll.o simpleBitonic.o openmp.o pthreadsSort.o cilk.o
+CFLAGS = -fopenmp -fcilkplus -pthread -O3 
+_DEPS = simpleBitonic.h openmp.h pthreadsSort.h cilk.h
+DIRS = bin obj
 
-HEAD=headers
-CC=gcc
-RM=rm -f
-CFLAGS=-I. -fopenmp -fcilkplus -O2
-_DEPS=simpleBitonic.h openmp.h pthreadsSort.h cilk.h
-DEPS=$(patsubst %,$(HEAD)/%,$(_DEPS))
-OBJ=testAll.o simpleBitonic.o openmp.o pthreadsSort.o cilk.o
+# DIRECTORIES
+SRC = src
+BIN = bin
+HEADERS = headers
+OBJD = obj
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+DEPS = $(patsubst %, $(HEADERS)/%,$(_DEPS))
+OBJ = $(patsubst %, $(OBJD)/%,$(_OBJ))
 
-test: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+# COMMANDS
+all: $(DIRS) $(RUN)
+
+$(DIRS):
+	$(MKDIR) $@
+
+$(OBJD)/%.o: $(SRC)/%.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS) -I$(HEADERS) 
+
+test: $(OBJ) 
+	$(CC) -o $(BIN)/$@ $^ $(CFLAGS)
 
 clean:
-	$(RM) *.o *~
+	$(RM) $(OBJD)/*
+
+clean_all:
+	$(RM) $(OBJD)/* $(BIN)/*

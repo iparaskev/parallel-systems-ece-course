@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cilk/cilk.h>
 #include <sys/time.h>
-#include "headers/cilk.h"
+#include "cilk.h"
 
 static const int ASCENDING = 1;
 static const int DESCENDING = 0;
@@ -13,10 +13,12 @@ void __cilkrts_end_cilk(void);
 void __cilkrts_init(void);
 
 // process of workers initiation
-void setNWorkers(char *wokers){
-    __cilkrts_end_cilk();
-    __cilkrts_set_param("nworkers", wokers);
-    __cilkrts_init();
+void 
+setNWorkers (char *wokers)
+{
+	__cilkrts_end_cilk();
+	__cilkrts_set_param("nworkers", wokers);
+	__cilkrts_init();
 }
 
 // create array and initialize it for the cilk implementation 

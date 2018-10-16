@@ -1,4 +1,4 @@
-#include "headers/pthreadsSort.h"
+#include "pthreadsSort.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>

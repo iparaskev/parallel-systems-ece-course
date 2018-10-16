@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "headers/simpleBitonic.h"
+#include "simpleBitonic.h"
 
 const int ASCENDING = 1;
 const int DESCENDING = 0;
