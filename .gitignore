@@ -6,3 +6,4 @@ obj
 tmp/
 *.bin
 report
+*.swp

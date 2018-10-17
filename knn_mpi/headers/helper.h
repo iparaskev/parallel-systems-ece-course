@@ -8,5 +8,7 @@ void load_labels(char *name);
 void init_neighbors(void);
 void init_neighbors_dist(void);
 int check_labels(void);
+void exchange(int index, double dist, int i, int j);
+double norm(double *r);
 
 #endif
