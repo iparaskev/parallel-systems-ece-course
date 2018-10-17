@@ -35,23 +35,32 @@ int main(int argc, char **argv)
 	}
 	else if (files == 1)
 	{
-		strcpy(labels_path, "dataset/train_768_labels.bin");
-		strcpy(examples_path, "data/train_768.bin");
+		strcpy(labels_path, "datasets/train_768_labels.bin");
+		strcpy(examples_path, "datasets/train_768.bin");
 	}
 	else
 	{
-		strcpy(labels_path, "dataset/train_30_labels.bin");
-		strcpy(examples_path, "dataset/train_30.bin");
+		strcpy(labels_path, "datasets/train_30_labels.bin");
+		strcpy(examples_path, "datasets/train_30.bin");
 	}
 
-	load_labels(labels_path);
-	load_examples(examples_path);
-	
-	init_neighbors();
-	init_neighbors_dist();
 	
 	if (strcmp(method, "serial") == 0)
 	{
+		/* Init mpi vars*/
+		world_size = 1;
+		rank = 0;
+
+		/* Load data*/
+		load_labels(labels_path);
+		get_columns(examples_path);                               
+		get_rows(labels_path);
+		load_examples(examples_path);
+		
+		/* Initialize arrays.*/
+		init_neighbors();
+		init_neighbors_dist();
+
 		gettimeofday (&startwtime, NULL);
 		find_kneighbors_serial();
 		gettimeofday (&endwtime, NULL);
@@ -77,6 +86,13 @@ int main(int argc, char **argv)
 			load_labels(labels_path);
 			get_columns(examples_path);
 		}
+
+		// rank 0 get columns
+		if (!rank)
+		{                                                             
+			load_labels(labels_path);                        
+			get_columns(examples_path);                               
+		}                                                                       
 		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 		get_rows(labels_path);

@@ -29,7 +29,7 @@ load_labels (char *name)
 	size_t nfils = fread(labels, sizeof(double), number_elements, f);
 	if (!nfils)
 	{
-		puts("Error reading the file");
+		puts("Error reading labels");
 		exit(1);
 	}
 	fclose(f);
@@ -180,9 +180,9 @@ check_labels(void)
 
 	char correct_path[100];
 	if (files == 1)
-		strcpy(correct_path, "data/correct768.bin");
+		strcpy(correct_path, "datasets/correct768.bin");
 	else
-		strcpy(correct_path, "data/correct.bin");
+		strcpy(correct_path, "datasets/correct.bin");
 	double *matlab_neighbors = load_correct(correct_path);
 	
 	// array with sum of every prediction
@@ -230,3 +230,5 @@ check_labels(void)
 
 	return 0;
 }
+
+
