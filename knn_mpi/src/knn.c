@@ -68,6 +68,9 @@ int main(int argc, char **argv)
 			      + endwtime.tv_sec - startwtime.tv_sec);
 		printf("%s wall clock time = %f\n","serial knn", seq_time);	
 		
+		if (check_labels())
+			printf("Wrong result\n");
+
 		free(neighbors);
 	}
 	else

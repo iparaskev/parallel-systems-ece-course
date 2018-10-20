@@ -145,6 +145,7 @@ exchange(int index, double dist, int i, int j)
 	}
 }
 
+/* Compute the norm of a row.*/
 double 
 norm(double *r)
 {

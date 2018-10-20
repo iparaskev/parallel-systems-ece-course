@@ -15,7 +15,10 @@ find_kneighbors_serial (void)
 	double dist;
 	double tmp;
 	int N = 50;
-	double dists[N][N];
+	//double dists[N][N];
+	double **dists = malloc(N * sizeof *dists);
+	for (int i = 0; i < N; i++)
+		dists[i] = malloc(N * sizeof **dists);
 	// norms of rows
 	double norms_rows[N];
 	double norms_cols[N];
@@ -30,48 +33,97 @@ find_kneighbors_serial (void)
 	for (int i = 0; i < rows; i += N)
 	{
 			
-		for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-			norms_rows[k1 - i] = norm(&array[k1 * columns]);
+		/* Rows norms*/
+		n_norm(norms_rows, array, i, N, rows);
 			
 		for (int j = 0; j < rows; j += N)
 		{	
-			for (int k1 = j; (k1 < (j + N) && k1 < rows); k1++)
-				norms_cols[k1 - j] = norm(&comp_array[k1 * columns]);
-				
-			for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-				for (int l = j; (l < (j + N) && l < rows); l++)
-				{
-					tmp = 0;
-					for (int m = 0; m < columns; m++)
-						tmp -= array[k1 * columns + m]\
-						       * comp_array[l * columns + m];
-					
-					dists[k1 - i][l - j] = norms_rows[k1 - i] + norms_cols[l - j]\
-					           	       + 2 * tmp;	
-				}		
+			/* Columns norms*/
+			n_norm(norms_cols, comp_array, j, N, rows);
+			update_distances(dists, array, 
+					 comp_array, rows,
+					 norms_rows, norms_cols, 
+					 i, j, N, 0);
 
-			for (int k1 = 0; k1 < N; k1++)
-				for (int l = 0; l < N; l++)
-					if (dists[k1][l] <= neighbors_dist[k1 + i][k-1])
-						for(int index = 0; index < k; index++)
-							// insert in the que
-							if (dists[k1][l] <= neighbors_dist[k1 + i][index])
-							{
-								/* exchange for
-								 * current index
-								 */
-								exchange(index,
-									 dists[k1][l], 
-									 k1 + i, 
-									 l + j);
-								break;
-							}
 		}
 		
 	}
 	
 }
 
+int
+translate_index(int mes, int j)
+{
+	int global_j;
+	if (mes > rank)
+		global_j = j + (world_size - 1)*el_per_proc\
+			   - ((mes - (rank + 1))*el_per_proc); 
+	else
+		global_j = j + rank*el_per_proc - mes*el_per_proc;
+
+	return global_j;
+
+}
+
+/* Compute the norms of N rows inside an array*/
+void 
+n_norm(double *norms, double *array, int start, int N, int find_end)
+{
+	for (int row = start; (row < (start + N) && (row < find_end)); row++)	
+		norms[row - start] = norm(&array[row * columns]);
+}
+
+void
+distances(double **dists, double *array, 
+	  double *comp_array, int size_comp,
+	  double *norms_rows, double *norms_cols,
+	  int i, int j,
+	  int N)
+{
+	double temp;
+	for (int row = i; (row < (i + N) && row < rows); row++)
+		for (int col = j; (col < (j + N) && col < size_comp); col++)
+		{
+			temp = 0;
+			for (int in_col = 0; in_col < columns; in_col++)
+				temp -= array[row*columns + in_col]\
+				        * comp_array[col*columns + in_col];
+
+			dists[row - i][col - j] = norms_rows[row - i]\
+						  + norms_cols[col - j]\
+						  + 2*temp;
+		}
+}
+
+void
+update_distances(double **dists, double *array, 
+	         double *comp_array, int size_comp,
+	         double *norms_rows, double *norms_cols,
+	         int i, int j,
+	         int N, int mes)
+{
+	distances(dists, array, comp_array, size_comp, 
+		  norms_rows, norms_cols, i, j, N);
+
+	/* Update neighbors.*/
+	for (int row = i; (row < (i + N) && row < rows); row++)
+		for (int col = j; (col < (j + N) && col < size_comp); col++)
+		{
+			if (dists[row - i][col - j] <= neighbors_dist[row][k - 1])
+				for (int index = 0; index < k; index++)
+					if (dists[row - i][col - j]
+					    <= neighbors_dist[row][index])
+					{
+						// want global j
+						int global_j = translate_index(mes, j);
+
+						exchange(index, dists[row - i][col - j],
+							 row, (col - j) + global_j);
+
+						break;
+					}
+		}
+}
 
 void 
 find_kneighbors_blocking (void)
@@ -87,8 +139,10 @@ find_kneighbors_blocking (void)
 	int rec_size;
 	
 	int N = 50;
-	
-	double dists[N][N];
+	double **dists = malloc(N * sizeof *dists);
+	for (int i = 0; i < N; i++)
+		dists[i] = malloc(N * sizeof **dists);
+
 	// norms of rows
 	double norms_rows[N];
 	double norms_cols[N];
@@ -108,60 +162,18 @@ find_kneighbors_blocking (void)
 		// #pragma omp parallel for private(norms_rows, norms_cols, dists)
 		for (int i = 0; i < rows; i += N)
 		{
-			for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-				norms_rows[k1 - i] = norm(&array[k1 * columns]);
-			
+			/* Rows norms*/
+			n_norm(norms_rows, array, i, N, rows);
+
 			for (int j = 0; j < size_comp; j += N)
 			{	
-				for (int k1 = j; (k1 < (j + N) && k1 < size_comp); k1++)
-					norms_cols[k1 - j] = norm(&comp_array[k1 * columns]);
+				/* Columns norms*/
+				n_norm(norms_cols, comp_array, j, N, size_comp);
 				
-				for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-					for (int l = j; (l < (j + N) && l < size_comp); l++)
-					{
-						tmp = 0;
-						for (int m = 0; m < columns; m++)
-							tmp -= array[k1 * columns + m]\
-							       * comp_array[l * columns + m];
-						
-						dists[k1 - i][l - j] = norms_rows[k1 - i]\
-								       + norms_cols[l - j]\
-								       + 2 * tmp;		
-					}		
-				for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-					for (int l = j; (l < (j + N) && l < size_comp); l++)
-					{
-						if (dists[k1 - i][l - j] <= neighbors_dist[k1][k-1])
-						{
-							for(int index = 0; index < k; index++)		
-								// insert in the que
-								if (dists[k1 - i][l - j] 
-								    <= neighbors_dist[k1][index])
-								{
-									// exchange for current index
-
-									// want global j
-									int global_j;
-									if (mes > rank)
-										global_j = j\
-											   + (world_size - 1)\
-											   * el_per_proc\
-											   - ((mes - (rank + 1))
-											      * el_per_proc); 
-									else
-										global_j = j\
-											   + rank\
-											   * el_per_proc\
-											   - (mes * el_per_proc);
-									
-									exchange(index,
-										 dists[k1 - i][l - j],
-										 k1,
-										 (l - j) + global_j);
-									break;
-								}
-						}
-					}
+				update_distances(dists, array, 
+						 comp_array, size_comp,
+					         norms_rows, norms_cols, 
+						 i, j, N, mes);
 			}	
 		}
 		
@@ -243,7 +255,10 @@ find_kneighbors_nonblocking(void)
 	int receive_from = (rank == 0) ? (world_size - 1) : (rank - 1);
 	
 	int N = 50;
-	double dists[N][N];
+	//double dists[N][N];
+	double **dists = malloc(N * sizeof *dists);
+	for (int i = 0; i < N; i++)
+		dists[i] = malloc(N * sizeof **dists);
 	// norms of rows
 	double norms_rows[N];
 	double norms_cols[N];
@@ -264,50 +279,25 @@ find_kneighbors_nonblocking(void)
 			
 		MPI_Irecv(receiver, rec_size, MPI_DOUBLE, receive_from, 
 				        0, MPI_COMM_WORLD, &mpireq_r);
-
+		
 		// #pragma omp parallel for private(norms_rows, norms_cols, dists)
-		for (int i = 0; i < rows; i += N){
-			
-			for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-				norms_rows[k1 - i] = norm(&array[k1 * columns]);
-			
-			for (int j = 0; j < size_comp; j += N){	
-				
-				for (int k1 = j; (k1 < (j + N) && k1 < size_comp); k1++)
-					norms_cols[k1 - j] = norm(&comp_array[k1 * columns]);
-				
-				for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-					for (int l = j; (l < (j + N) && l < size_comp); l++){
-						tmp = 0;
-						for (int m = 0; m < columns; m++)
-							tmp -= array[k1 * columns + m] * comp_array[l * columns + m];
-						
-						dists[k1 - i][l - j] = norms_rows[k1 - i] + norms_cols[l - j] + 2 * tmp;	
-					}		
+		for (int i = 0; i < rows; i += N)
+		{
+			/* Rows norms*/
+			n_norm(norms_rows, array, i, N, rows);
 
-				for (int k1 = i; (k1 < (i + N) && k1 < rows); k1++)
-					for (int l = j; (l < (j + N) && l < size_comp); l++){
-						if (dists[k1 - i][l - j] <= neighbors_dist[k1][k-1]){
-							for(int index = 0; index < k; index++)		
-								// insert in the que
-								if (dists[k1 - i][l - j] <= neighbors_dist[k1][index]){
-									// exchange for current index
-
-									// want global j
-									int global_j;
-									if (mes > rank)
-										global_j = j + (world_size - 1) * el_per_proc - 
-									                 ((mes - (rank + 1)) * el_per_proc); 
-									else
-										global_j = j + rank * el_per_proc - (mes * el_per_proc);
-									
-									exchange(index, dists[k1 - i][l - j], k1, (l - j) + global_j);
-									break;
-								}
-						}
-					}	
-			}	
+			for (int j = 0; j < size_comp; j += N)
+			{	
+				/* Columns norms*/
+				n_norm(norms_cols, comp_array, j, N, size_comp);
+				
+				update_distances(dists, array, 
+						 comp_array, size_comp,
+					         norms_rows, norms_cols, 
+						 i, j, N, mes);
+			}
 		}
+
 		MPI_Wait(&mpireq_s, &status);
 		MPI_Wait(&mpireq_r, &status);
 		// sync processes

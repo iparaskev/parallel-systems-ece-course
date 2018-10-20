@@ -4,5 +4,20 @@
 void find_kneighbors_serial(void);
 void find_kneighbors_blocking(void);
 void find_kneighbors_nonblocking(void);
+int translate_index(int mes, int j);
+void n_norm(double *norms, double *array, int start, int N, int find_end);
+void distances(double **dists, double *array, 
+	           double *comp_array, int size_comp,
+	           double *norms_rows, double *norms_cols,
+	           int i, int j,
+	           int N);
+void update_distances(double **dists, double *array, 
+	                  double *comp_array, int size_comp,
+	                  double *norms_rows, double *norms_cols,
+	                  int i, int j,
+	                  int N, int mes);
+
+
+
 
 #endif
