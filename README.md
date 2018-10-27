@@ -7,7 +7,7 @@
 A parallel implementation of bitonic sort using cilk, openmp and pthreads.\
 **UNDER MAINTENANCE**
 * [mpi_knn](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/knn_mpi):\
-**UNDER MAINTENANCE**
+An implementation of k-nearest neighbors in an MPI environment.
 * [cuda_mean_shift](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/cuda_mean_shift):\
 **UNDER MAINTENANCE**
 * [parallel_pagerank](https://github.com/iparaskev/parallel-systems-ece-course/tree/master/parallel_pagerank):\
