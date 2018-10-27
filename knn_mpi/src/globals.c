@@ -1,13 +1,8 @@
 #include "globals.h"
 
-int rows, columns;
-int k;
-int el_per_proc;
+int rows, columns; // Rows and columns of the dataset's batch for every process.
+int k;             // Number of neighbors.
+int el_per_proc;   // How many elements has the process.
 int files;
-int rank;
-int world_size;
-int *neighbors;
-int *all_neighbors;
-double *array;
-double **neighbors_dist;
-double *labels;
+int rank;          // Process's rank
+int world_size;    // The number of processes.

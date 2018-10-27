@@ -5,21 +5,26 @@
 #include "helper.h"
 #include "globals.h"
 
-void 
-load_labels (char *name)
+/* Function to load the labels of a dataset from a binary file
+ *
+ * Arguments:
+ * name -- Path of the file
+ */
+double* 
+load_labels(char *name)
 {
 	FILE *f;
 	f = fopen(name, "rb");
 	if (f == NULL) 
 		perror("Error");
 
-	// see how many elements
+	/* See how many elements are in the file.*/
 	fseek(f, 0L, SEEK_END);
 	long int pos = ftell(f);
 	fseek(f, 0L, SEEK_SET);
 	int number_elements = pos / sizeof(double);
 
-	labels = malloc(sizeof *labels * number_elements);
+	double *labels = malloc(sizeof *labels * number_elements);
 	if (labels == NULL)
 	{
 		perror("Malloc at reading the files");
@@ -34,9 +39,19 @@ load_labels (char *name)
 	}
 	fclose(f);
 	rows = number_elements;
+
+	return labels;
 }
 
-void 
+/* Load the complete dataset after loading the labels.
+ *
+ * Arguments:
+ * name -- Path of the file
+ *
+ * Output:
+ * An array with the dataset.
+ */
+double* 
 load_examples(char *name)
 {
 	FILE *f;
@@ -44,28 +59,38 @@ load_examples(char *name)
 	if (f == NULL) 
 		perror("Error");
 
-	// see how many elements
+	/* See how many elements are in the file.*/
 	fseek(f, 0L, SEEK_END);
 	long int pos = ftell(f);
 	
 	int number_elements;
 	int all_el = pos / sizeof (double);
 	number_elements = rows * columns;
+
+	/* Read different rows of elements for every process in the MPI 
+	 * environment.
+	 */
 	if (rank != (world_size - 1))
 		fseek(f, rank * number_elements * sizeof(double), SEEK_SET);
 	else
 		fseek(f, (all_el - number_elements) * sizeof(double), SEEK_SET);
 
-	array = malloc(sizeof *array * number_elements);
+	double *array = malloc(sizeof *array * number_elements);
 	size_t nfils = fread(array, sizeof(double), number_elements, f);
 	if (!nfils){
 		puts("Error reading the file");
 		exit(1);
 	}
 	fclose(f);
-	
+
+	return array;
 }
 
+/* See how many rows the process will have to read in the MPI environment
+ *
+ * Arguments:
+ * name -- Path to the file name.
+ */
 void
 get_rows(char *name)
 {
@@ -77,6 +102,8 @@ get_rows(char *name)
 	// see how many elements
 	fseek(f, 0L, SEEK_END);
 	long int pos = ftell(f);
+	
+	/* The last process will get the remaining elements*/
 	if (rank == (world_size - 1))
 		rows = (pos / sizeof (double)) - (world_size - 1) * 
 	         ((pos / sizeof (double)) / world_size);
@@ -85,6 +112,12 @@ get_rows(char *name)
 	el_per_proc = (pos / sizeof (double)) / world_size;
 }
 
+/* Find the number of collumns of the dataset after reading labels and 
+ * computed the rows.
+ *
+ * Arguments:
+ * name -- Path to the file name.
+ */
 void 
 get_columns(char *name)
 {
@@ -103,26 +136,62 @@ get_columns(char *name)
 	fclose(f);
 }
 
-void 
+/* Initialize the k neighbors array for every process*/
+int* 
 init_neighbors(void)
 {
-	neighbors = malloc(sizeof *neighbors * rows * k);
+	int *neighbors = malloc(sizeof *neighbors * rows * k);
+	if (neighbors == NULL)
+	{
+		perror("Malloc neighbors");
+		exit(1);
+	}
 	memset(neighbors, 0, sizeof *neighbors * rows * k);
+
+	return neighbors;
 }
 
-void 
+/* Initialize the distances of the k neighbors*/
+double** 
 init_neighbors_dist(void)
 {
-	neighbors_dist = malloc(rows * sizeof(double *));
-	for (int i = 0; i < rows; i++){
+	double **neighbors_dist = malloc(rows * sizeof *neighbors_dist);
+	if (neighbors_dist == NULL)
+	{
+		perror("Malloc at neighbors dist");
+		exit(1);
+	}
+
+	/* Allocate and init every row.*/
+	for (int i = 0; i < rows; i++)
+	{
 		neighbors_dist[i] = malloc(k * sizeof(double));
+		if (neighbors_dist[i] == NULL)
+		{
+			perror("Malloc at neighbors_dist[i]");
+			exit(1);
+		}
 		for (int j = 0; j < k; j++)
 			neighbors_dist[i][j] = (double)INT_MAX;
 	}
+
+	return neighbors_dist;
 }
 
+/* Update the neighbors of an element.
+ *
+ * Arguments:
+ * neighbors -- Pointer to the start of neighbors vector
+ * neighbors -- Distances of neighbors
+ * index -- The global row index
+ * dist -- The distance with the current element
+ * i -- The row
+ * j -- Column
+ */
 void 
-exchange(int index, double dist, int i, int j)
+exchange(int* neighbors, double **neighbors_dist, 
+	 int index, double dist,
+	 int i, int j)
 {		
 	double temp_dist;
 	double temp_pos;
@@ -174,7 +243,7 @@ load_correct(char *name)
 }
 
 int  
-check_labels(void)
+check_labels(int *all_neighbors, double *labels)
 {
 	// init predictions
 	double *predictions = malloc(sizeof *predictions * rows);
@@ -197,8 +266,6 @@ check_labels(void)
 		for (int j = 1; j < k; j++){
 			ind = labels[all_neighbors[i * k + j]] - 1;
 			if (all_neighbors[i * k + j] != (matlab_neighbors[i * 128 + (j - 1)] - 1)){
-				/* at second file correct768 some labels of elements with differnt labels
-				and some distances are reversed example matlab_indexes: 10 35, code_indexes:35 10*/
 				c_wrong++;
 				if (c_wrong == 200)
 					return 1;
@@ -231,5 +298,3 @@ check_labels(void)
 
 	return 0;
 }
-
-

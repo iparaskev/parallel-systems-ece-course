@@ -3,12 +3,14 @@
 
 void get_rows(char *name);
 void get_columns(char *name);
-void load_examples(char *name);
-void load_labels(char *name);
-void init_neighbors(void);
-void init_neighbors_dist(void);
-int check_labels(void);
-void exchange(int index, double dist, int i, int j);
+double* load_examples(char *name);
+double* load_labels(char *name);
+int* init_neighbors(void);
+double** init_neighbors_dist(void);
+int check_labels(int *all_neighbors, double *labels);
+void exchange(int* neighbors, double **neighbors_dist, 
+	          int index, double dist,
+	          int i, int j);
 double norm(double *r);
 
 #endif

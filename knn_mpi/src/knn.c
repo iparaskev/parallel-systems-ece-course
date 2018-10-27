@@ -52,76 +52,73 @@ int main(int argc, char **argv)
 		rank = 0;
 
 		/* Load data*/
-		load_labels(labels_path);
+		double *labels = load_labels(labels_path);
 		get_columns(examples_path);                               
 		get_rows(labels_path);
-		load_examples(examples_path);
-		
-		/* Initialize arrays.*/
-		init_neighbors();
-		init_neighbors_dist();
+		double *array = load_examples(examples_path);
 
+		/* Find the neighbors.*/
 		gettimeofday (&startwtime, NULL);
-		find_kneighbors_serial();
+		int *neighbors = find_kneighbors_serial(array);
 		gettimeofday (&endwtime, NULL);
+
+		/* Print time and results.*/
 		seq_time = (double)((endwtime.tv_usec - startwtime.tv_usec)/1.0e6
 			      + endwtime.tv_sec - startwtime.tv_sec);
 		printf("%s wall clock time = %f\n","serial knn", seq_time);	
 		
-		if (check_labels())
+		if (check_labels(neighbors, labels))
 			printf("Wrong result\n");
 
 		free(neighbors);
 	}
 	else
 	{
-		// initialize mpi environment 
+		/* Initialize mpi environment.*/
 		MPI_Init(NULL, NULL);
 
-		// get number of processes
+		/* Get number of processes.*/
 		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-		// get process rank 
+		/* Get process rank.*/
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-		// rank 0 get columns
+		/* Rank 0 get columns.*/
+		double *labels;
 		if (!rank){
-			load_labels(labels_path);
+			labels = load_labels(labels_path);
 			get_columns(examples_path);
 		}
 
-		// rank 0 get columns
-		if (!rank)
-		{                                                             
-			load_labels(labels_path);                        
-			get_columns(examples_path);                               
-		}                                                                       
 		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 		get_rows(labels_path);
-		load_examples(examples_path);
+		double *array = load_examples(examples_path);
 		
-		init_neighbors();
-		init_neighbors_dist();
 		MPI_Barrier(MPI_COMM_WORLD);
 		double start = MPI_Wtime(), total_time;
 
 		/* Call find knn*/
+		int *neighbors;
 		if (strcmp(method, "blocking") == 0)
-			find_kneighbors_blocking();
+			neighbors = find_kneighbors_blocking(array);
 		else
-			find_kneighbors_nonblocking();
+			neighbors = find_kneighbors_nonblocking(array);
 
 		MPI_Barrier(MPI_COMM_WORLD);
+
+		/* Compute time.*/
 		total_time = MPI_Wtime() - start;
 		if (!rank)
 			printf("total time blocking %f\n", total_time);	
 		
+		/* Send the resutls to process zero.*/
 		int *starting_rec = malloc(sizeof *starting_rec * world_size);
 		for (int i = 0; i < world_size; i++)
 			starting_rec[i] = i * el_per_proc * k;
 		
 		int *rec_counts;
+		int *all_neighbors;
 		if (!rank)
 		{
 			load_labels(labels_path);
@@ -142,8 +139,10 @@ int main(int argc, char **argv)
 			    rec_counts, starting_rec,
 			    MPI_INT, 0,
 			    MPI_COMM_WORLD);
+
+		/* Check the resutls.*/
 		if (!rank){
-			if (check_labels())
+			if (check_labels(all_neighbors, labels))
 				printf("Wrong result\n");
 			
 			free(all_neighbors);
