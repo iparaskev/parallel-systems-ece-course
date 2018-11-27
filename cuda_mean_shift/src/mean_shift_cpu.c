@@ -5,12 +5,14 @@
 #include <limits.h>
 #include <sys/time.h>
 
-// global variables
+/* Global variables.*/
 int rows, columns;
 
-// local functions
+/* Local functions.*/
 double *read_data(char *name);
-void get_exp_sparse(double *x, double *y, double h, double ***w_updated, int **counter_per_row);
+void get_exp_sparse(double *x, double *y,
+	            double h, double ***w_updated,
+		    int **counter_per_row);
 void multiply_sparse(double *x, double **w, int *counters, double **y);
 void get_sparse_sum_per_row(double **w, int *counters, double **sums);
 double update_y(double *y_new, double *sums_array, double **y_updated);
@@ -25,29 +27,69 @@ now()
  return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-  double *x, *y, h, epsilon, *y_new, *sums_array;
-  double **w_sparse;
-  int *counter_per_row;
+	double *x, *y, h, epsilon, *y_new, *sums_array;
+	double **w_sparse;
+	int *counter_per_row;
 
-  if (argc < 6){
-  	fprintf(stderr, "it needs 5 arguments, which are: h iterations data validation_data dims\n");
-  	exit(1);
-  }
-  h = atoi(argv[1]);
-  int iterations = atoi(argv[2]);
+	if (argc < 6)
+	{
+		fprintf(stderr, "it needs 5 arguments, which are: h\
+			       	iterations data validation_data dims\n");
+		exit(1);
+	}
+	h = atoi(argv[1]);
+	int iterations = atoi(argv[2]);
 
-  // initialize arrays
+	/* Get columns.*/
 	columns = atoi(argv[5]);
-	x = read_data(argv[3]);
-	y = malloc(sizeof *y * rows * columns);
-	memcpy(y, x, sizeof *y * rows * columns);
-	y_new = malloc(sizeof *y_new * rows * columns);
-	sums_array = malloc(sizeof *sums_array * rows);
-	w_sparse = malloc(sizeof *w_sparse * rows);
-	counter_per_row = malloc(sizeof *counter_per_row * rows);
 
+	/* Read data.*/
+	x = read_data(argv[3]);
+
+	/*Initialize arrays.*/
+	y = malloc(sizeof *y * rows * columns);
+	if (y == NULL)
+	{
+		perror("Malloc at y");
+		exit(1);
+	}
+	memcpy(y, x, sizeof *y * rows * columns);
+
+	/* The updated data.*/
+	y_new = malloc(sizeof *y_new * rows * columns);
+	if (y_new == NULL)
+	{
+		perror("Malloc at y_new");
+		exit(1);
+	}
+
+	/* Array for the row sums.*/
+	sums_array = malloc(sizeof *sums_array * rows);
+	if (sums_array == NULL)
+	{
+		perror("Malloc at sums_array");
+		exit(1);
+	}
+
+	/* Distances of all the elements.*/
+	w_sparse = malloc(sizeof *w_sparse * rows);
+	if (w_sparse == NULL)
+	{
+		perror("Malloc at w_sparse.");
+		exit(1);
+	}
+
+	counter_per_row = malloc(sizeof *counter_per_row * rows);
+	if (counter_per_row == NULL)
+	{
+		perror("Malloc at counter_per_row.");
+		exit(1);
+	}
+
+	/* Initialize mean shift variables*/
 	double norm = INT_MAX;
 	epsilon = 1e-4*h;
 	double t_start = now(), t_end;
@@ -55,9 +97,8 @@ int main(int argc, char **argv)
 	double s;
 	int j = 0;
 	printf("Start %d\n", iterations);
-	while (sqrt(norm) > epsilon){
-	// for (int j = 0; j < iterations; j++){
-		
+	while (sqrt(norm) > epsilon)
+	{
 		// get_exp(x, y, h, &w);
 		get_exp_sparse(x, y, h, &w_sparse, &counter_per_row);
 		
@@ -248,8 +289,8 @@ check_results(double *y, char *name)
 void
 write_results(char **argv, int iterations, double time)
 {
-  FILE *f;
-  f = fopen("results_cpu.txt", "a");
-  fprintf(f, "%d %d %s %d %f\n", rows, columns, argv[1], iterations, time);
-  fclose(f);
+	FILE *f;
+	f = fopen("results_cpu.txt", "a");
+	fprintf(f, "%d %d %s %d %f\n", rows, columns, argv[1], iterations, time);
+	fclose(f);
 }
